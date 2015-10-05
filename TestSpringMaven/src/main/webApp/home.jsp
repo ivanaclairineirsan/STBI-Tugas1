@@ -52,7 +52,7 @@
   <div id="formradio5" style="position:absolute; left:132px; top:332px; z-index:12"><input type="radio" name="DIDF" value="No" checked> No </div>
   <div id="formradio11" style="position:absolute; left:132px; top:388px; z-index:14"><input type="radio" name="DSTEMMING" value="yes"> Yes</div>
   <div id="formradio12" style="position:absolute; left:132px; top:408px; z-index:15"><input type="radio" name="DSTEMMING" value="no" checked> No </div>
-  <input name="submit" type="submit" value="Search" style="position:absolute;left:1057px;top:418px;z-index:16">
+  <input name="submit" type="submit" value="Indexing" style="position:absolute;left:1057px;top:318px;z-index:16">
   <div id="formradio15" style="position:absolute; left:132px; top:311px; z-index:17"><input type="radio" name="DIDF" value="Yes"> Yes </div>
   <div id="formradio16" style="position:absolute; left:132px; top:461px; z-index:20"><input type="radio" name="DNORM" value="yes"> Yes </div>
   <div id="formradio17" style="position:absolute; left:132px; top:483px; z-index:21"><input type="radio" name="DNORM" value="no" checked> No </div>
@@ -68,10 +68,8 @@
   <div id="formradio20" style="position:absolute; left:565px; top:456px; z-index:35"><input type="radio" name="QNORM" value="yes"> Yes (Use IDF) </div>
   <div id="formradio21" style="position:absolute; left:565px; top:478px; z-index:36"><input type="radio" name="QNORM" value="no" checked> No </div>
   <div id="formradio22" style="position:absolute; left:565px; top:246px; z-index:37"><input type="radio" name="QTF" value="No" checked> No TF </div>
-  <div id="formradio23" style="position:absolute; left:1038px; top:229px; z-index:39"><input type="radio" name="INDEXING" value="yes"> Yes </div>
-  <div id="formradio24" style="position:absolute; left:1038px; top:250px; z-index:40"><input type="radio" name="INDEXING" value="no" checked> No </div>
-  <input name="formtext3" value="Query Path" type="file" style="position:absolute;width:210px;left:1083px;top:319px;z-index:41">
-  <input name="formtext4" value="Query Path" type="file" style="position:absolute;width:210px;left:1083px;top:353px;z-index:43">
+  <input name="formtext3" value="Relevance Path" type="file" style="position:absolute;width:210px;left:1120px;top:219px;z-index:41">
+  <input name="formtext4" value="Stopword Path" type="file" style="position:absolute;width:210px;left:1120px;top:253px;z-index:43">
 </form>
 
 <div id="text1" style="position:absolute; overflow:hidden; left:667px; top:55px; width:81px; height:36px; z-index:2">
@@ -134,17 +132,12 @@
     <div><font face="Comic Sans MS" class="ws12">NORMALIZATION</font></div>
   </div></div>
 
-<div id="text13" style="position:absolute; overflow:hidden; left:1038px; top:206px; width:160px; height:22px; z-index:38">
+<div id="text14" style="position:absolute; overflow:hidden; left:927px; top:220px; width:165px; height:27px; z-index:42">
   <div class="wpmd">
-    <div><font face="Comic Sans MS" class="ws12">INDEXING</font></div>
+    <div><font face="Comic Sans MS" class="ws12">Relevance Judgement</font></div>
   </div></div>
 
-<div id="text14" style="position:absolute; overflow:hidden; left:927px; top:320px; width:153px; height:27px; z-index:42">
-  <div class="wpmd">
-    <div><font face="Comic Sans MS" class="ws12">Relevant Judgement</font></div>
-  </div></div>
-
-<div id="text15" style="position:absolute; overflow:hidden; left:927px; top:353px; width:153px; height:27px; z-index:44">
+<div id="text15" style="position:absolute; overflow:hidden; left:927px; top:253px; width:153px; height:27px; z-index:44">
   <div class="wpmd">
     <div><font face="Comic Sans MS" class="ws12">Stopword</font></div>
   </div></div>
