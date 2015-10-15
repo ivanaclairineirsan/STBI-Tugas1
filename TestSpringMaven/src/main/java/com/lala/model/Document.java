@@ -17,4 +17,11 @@ public class Document {
         this.description = description;
     }
 
+    public Document() {
+        no = 0;
+        title = null;
+        author = null;
+        description = null;
+    }
+
 }
