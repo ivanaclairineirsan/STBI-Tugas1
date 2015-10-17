@@ -17,7 +17,7 @@ public class Queries {
     public ArrayList<Query> queryList;
 
     /* terms per query */
-    private ArrayList<String> terms;
+    public ArrayList<String> terms;
     /* inverted terms */
     private ArrayList<InvertedTerm> invertedTerms;
 
@@ -367,8 +367,6 @@ public class Queries {
             }
         }
 
-        // add queryList.query.docList here
-
         return termFreq;
     }
 
@@ -376,22 +374,45 @@ public class Queries {
         // search here, update query.relevantDocList here
     }
 
-    public double precision(int relevantDoc, int retrievedDoc) {
-        // calculate avg precision here
+    /**
+     * count the avg precision of all the query
+     * @return the avg precission
+     */
+    public double precision() {
+        double totalPrecission = 0;
+        for (Query aQueryList : queryList) {
+            aQueryList.countPrecision();
+            totalPrecission += aQueryList.precission;
+        }
 
-        return 0;
+        return totalPrecission/queryList.size();
     }
 
-    public double recall(int relevantDoc, int allRelevantDoc) {
-        // calculate avg recall here
+    /**
+     * count the avg recall of the query
+     * @return the avg precission
+     */
+    public double recall() {
+        double totalRecall = 0;
+        for (Query aQueryList : queryList) {
+            aQueryList.countRecall();
+            totalRecall += aQueryList.recall;
+        }
 
-        return 0;
+        return totalRecall/queryList.size();
     }
 
+    /**
+     * count the non interpolated average precision of all the query
+     * @return non interpolated average precision
+     */
     public double nonInterpolatedAvgPrecision() {
-        // calculate avg NIAP here
-
-        return 0;
+        double totalNIAP = 0;
+        for (Query aQueryList : queryList) {
+            aQueryList.countNonInterpolatedAvgPrecision();
+            totalNIAP += aQueryList.NIAP;
+        }
+        return totalNIAP;
     }
 
 }
