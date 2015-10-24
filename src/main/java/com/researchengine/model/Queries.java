@@ -25,6 +25,15 @@ public class Queries {
     }
 
     /**
+     * create a single query
+     * @param query the query
+     */
+    public void createQuery(String query) {
+        queryList = new ArrayList<>();
+        queryList.add(new Query(0, query, null));
+    }
+
+    /**
      * load inverted file to the invertedTerms
      * @param ifLocation the location of the inverted file
      */
@@ -365,7 +374,7 @@ public class Queries {
                         double docWeight = 1;
                         if (idf) {
                             queryWeight = queryWeight * invertedTerm.weight;
-/*------------------------*/docWeight = docWeight * invertedTerm.weight; // * tf document -------------------------------------------------------------------------
+/*-------------------*/     docWeight = docWeight * invertedTerm.weight; // * tf document -------------------------------------------------------------------------
                         }
 
                         if (isNormalize) {

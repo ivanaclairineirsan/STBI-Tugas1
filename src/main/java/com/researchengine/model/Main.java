@@ -8,10 +8,11 @@ import java.util.ArrayList;
 public class Main {
     public static void main(String[] args) {
         Queries q = new Queries();
-        q.loadRelevanceJudgement("data/CISI/qrels.text");
-        q.loadQueries("data/CISI/query.text");
+//        q.loadRelevanceJudgement("data/CISI/qrels.text");
+//        q.loadQueries("data/CISI/query.text");
         q.loadInvertedFile("data/iFile.txt");
 
+        q.createQuery("What problems and concerns are there in making up descriptive titles? What difficulties are involved in automatically retrieving articles from approximate titles? What is the usual relevance of the content of articles to their titles?");
         ArrayList<RetrievedDocument> results = q.search(0, true, true, "data/stopword.txt");
 
 
