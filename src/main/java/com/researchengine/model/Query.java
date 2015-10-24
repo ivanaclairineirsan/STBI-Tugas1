@@ -34,14 +34,34 @@ public class Query {
     }
 
     /**
+     * add the relevant document to the query if not already exist yet
+     * @param document related to the query
+     * @return 1 if success, 0 if not
+     */
+    public int addRelevantDocument(Document document) {
+        for (int i = 0; i < relevantDocList.size(); i++) {
+            if (relevantDocList.get(i).no == document.no) { // if the document is already exist
+                return 0;
+            }
+        }
+
+        relevantDocList.add(document);
+        return 1;
+    }
+
+    /**
      * find the number of relevant documents in relevant judgements
      */
     public void findRelevantNum() {
-        for (int i = 0; i < relevantDocList.size(); i++) {
-            for (int j = 0; j < rj.relevantDocs.size(); j++) {
-                if (relevantDocList.get(i).no == rj.relevantDocs.get(j)) {
-                    relevantNum++;
-                    break;
+        if (relevantDocList.size() > 0) {
+            if (rj != null) {
+                for (Document aRelevantDocList : relevantDocList) {
+                    for (int j = 0; j < rj.relevantDocs.size(); j++) {
+                        if (aRelevantDocList.no == rj.relevantDocs.get(j)) {
+                            relevantNum++;
+                            break;
+                        }
+                    }
                 }
             }
         }

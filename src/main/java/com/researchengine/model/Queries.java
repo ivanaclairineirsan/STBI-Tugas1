@@ -24,22 +24,6 @@ public class Queries {
     public Queries() {
     }
 
-    public Queries(String queryLocation, int tf, boolean idf, boolean normalization, boolean stemming, String swLocation, String rjLocation, String ifLocation) {
-        loadInvertedFile(ifLocation);
-
-        loadRelevanceJudgement(rjLocation);
-
-        loadQueries(queryLocation);
-
-        removeStopWord(swLocation);
-
-        doStemming(stemming);
-
-        calculateTermWeight(tf, idf, normalization);
-
-        search();
-    }
-
     /**
      * load inverted file to the invertedTerms
      * @param ifLocation the location of the inverted file
@@ -243,37 +227,34 @@ public class Queries {
     }
 
     /**
-     * find the weight of the related term from the inverted file
-     * @param term the term to find the weight
-     * @return the weight of the term
-     */
-    public double docTermWeight(String term) {
-        for (InvertedTerm invertedTerm: invertedTerms) {
-            if (invertedTerm.term.equals(term)) {
-                return invertedTerm.weight;
-            }
-        }
-        return 0;
-    }
-
-    /**
      * Calculate the tf, idf, and normalization of each words of the query
      * @param tf select the tf method (0: no-TF, 1: raw-TF, 2: binary-TF, 3: augmented-TF, 4: logarithmic-TF
-     * @param idf select the idf method (true: use IDF, false: don't use IDF)
-     * @param normalization select the normalization method (true: use normalization, false: don't use normalization)
      * @return list of the terms and the weights related to the used method
      */
-    public ArrayList<String[]> calculateTermWeight(int tf, boolean idf, boolean normalization) {
-        ArrayList<String[]> termFreq = new ArrayList<>();
-        String[] term;
+    public ArrayList<String[]> calculateTermFrequency(int tf) {
+        ArrayList<String[]> termFreq = new ArrayList<>(); // list of weight per word
+        String[] term; // [0]: term, [1]: frequency
         int counter;
 
         switch(tf) {
             case 0: // none
+                while(terms.size() > 0) {
+                    term = new String[2];
+                    term[0] = terms.get(0);
+                    terms.remove(0);
+                    for (int i = 0; i < terms.size(); i++) {
+                        if (terms.get(i).equals(term[0])) {
+                            terms.remove(i);
+                            i--;
+                        }
+                    }
+                    term[1] = "1";
+                    termFreq.add(term);
+                }
                 break;
             case 1: // raw
                 while(terms.size() > 0) {
-                    term = new String[2]; // [0]: term, [1]: frequency
+                    term = new String[2];
                     counter = 1;
                     term[0] = terms.get(0);
                     terms.remove(0);
@@ -351,68 +332,57 @@ public class Queries {
                 break;
         }
 
-        if (idf) {
-            for (int i = 0; i < termFreq.size(); i++) {
-                String[] temp = termFreq.get(i);
-                temp[1] = String.valueOf(Double.valueOf(temp[1]) * docTermWeight(temp[0]));
-                termFreq.set(i,temp);
-            }
-        }
-
-        if (normalization) {
-            for (int i = 0; i < termFreq.size(); i++) {
-                String[] temp = termFreq.get(i);
-                temp[1] = String.valueOf(Double.valueOf(temp[1])/termFreq.size());
-                termFreq.set(i,temp);
-            }
-        }
-
         return termFreq;
     }
 
-    public void search() {
-        // search here, update query.relevantDocList here
-    }
-
     /**
-     * count the avg precision of all the query
-     * @return the avg precission
+     * Retrieve the related documents from the query
+     * @param tf tf methods
+     * @param idf idf methods
+     * @param isNormalize whether want to normalize or not
+     * @param swLocation stopword location
+     * @return list of RetrievedDocument
      */
-    public double precision() {
-        double totalPrecission = 0;
-        for (Query aQueryList : queryList) {
-            aQueryList.countPrecision();
-            totalPrecission += aQueryList.precission;
-        }
+    public ArrayList<RetrievedDocument> search(int tf, boolean idf, boolean isNormalize, String swLocation) {
+        ArrayList<String[]> weightedTerms;
+        ArrayList<RetrievedDocument> result = new ArrayList<>();
+        ArrayList<InvertedTerm> termsRelated = new ArrayList<>();
 
-        return totalPrecission/queryList.size();
-    }
-
-    /**
-     * count the avg recall of the query
-     * @return the avg precission
-     */
-    public double recall() {
-        double totalRecall = 0;
         for (Query aQueryList : queryList) {
+
+            splitSentences(aQueryList.description);
+            removeStopWord(swLocation);
+            doStemming(true);
+            weightedTerms = calculateTermFrequency(tf);
+
+            for (String[] weightedTerm : weightedTerms) {
+                for (InvertedTerm invertedTerm : invertedTerms) {
+                    if (invertedTerm.term.equals(weightedTerm[0])) {
+                        Document newDoc = new Document(invertedTerm.documentNo, "a", "b", "c");
+                        aQueryList.addRelevantDocument(newDoc);
+
+                        double queryWeight = Double.valueOf(weightedTerm[1]);
+                        double docWeight = 1;
+                        if (idf) {
+                            queryWeight = queryWeight * invertedTerm.weight;
+/*------------------------*/docWeight = docWeight * invertedTerm.weight; // * tf document -------------------------------------------------------------------------
+                        }
+
+                        if (isNormalize) {
+                            // to be defined
+                        }
+
+                        termsRelated.add(new InvertedTerm(invertedTerm.term, invertedTerm.documentNo, queryWeight * docWeight));
+                    }
+                }
+            }
+
+            result.add(new RetrievedDocument(aQueryList.no, termsRelated, aQueryList.rj));
+            termsRelated = new ArrayList<>();
             aQueryList.countRecall();
-            totalRecall += aQueryList.recall;
+            aQueryList.countPrecision();
         }
 
-        return totalRecall/queryList.size();
+        return result;
     }
-
-    /**
-     * count the non interpolated average precision of all the query
-     * @return non interpolated average precision
-     */
-    public double nonInterpolatedAvgPrecision() {
-        double totalNIAP = 0;
-        for (Query aQueryList : queryList) {
-            aQueryList.countNonInterpolatedAvgPrecision();
-            totalNIAP += aQueryList.NIAP;
-        }
-        return totalNIAP;
-    }
-
 }
