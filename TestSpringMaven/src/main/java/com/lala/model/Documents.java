@@ -1,5 +1,6 @@
 package com.lala.model;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -12,10 +13,18 @@ public class Documents {
 
     public ArrayList<Document> docList;
 
-    public Documents(String docLocation, int tf, int idf, int normalization, int stemming, String swLocation, String ifLocation) {
+    public Documents(){
+
+    }
+
+    public Documents(String docLocation, int tf, int idf, int normalization, int stemming, String swLocation, String ifLocation) throws FileNotFoundException {
         loadDocuments(docLocation);
 
-        removeStopWord(swLocation);
+        try {
+            removeStopWord(swLocation);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
         doStemming(stemming);
 
@@ -25,50 +34,69 @@ public class Documents {
     }
 
     public void loadDocuments(String docLocation) {
+
         docList = new ArrayList<Document>();
 
         try {
+
             //load document
-            Scanner filein =  new Scanner(new FileInputStream(docLocation));
+            File file = new File(docLocation);
+            Scanner filein =  new Scanner(new FileInputStream(file));
             String temp = filein.nextLine();
+
             while(filein.hasNextLine())
             {
+
                 //parsing di sini
-                if (temp.substring(0, 1) == ".I") {
+                if (temp.substring(0,2).equals(".I")) {
+                    System.out.println("temp: " + temp.substring(0,2));
                     Document tempDoc = new Document();
-                    tempDoc.no = Integer.parseInt(temp.substring (3,temp.length()-1));
+
+                    tempDoc.no = Integer.parseInt(temp.substring(3, temp.length()));
 
                     //ambil judul
-                    String contenttemp = null;
+                    String contenttemp = "";
                     temp = filein.nextLine(); //pasti ".T"
 
                     temp = filein.nextLine(); //title baris pertama
 
-                    while (temp.substring(0,1) != ".A") {
+                    while (!temp.substring(0,2).equals(".A")) {
                         tempDoc.title += temp;
+                        tempDoc.title += ' ';
                         temp = filein.nextLine();
                     }
                     //keluar dari loop, judul sudah terambil semua, isi temp sekarang adalah ".A"
 
                     temp = filein.nextLine(); //author pertama
 
-                    while (temp != ".W") {
+                    while (!temp.equals(".W")) {
                         tempDoc.author += temp + ';';
                         temp = filein.nextLine();
                     }
+
+
                     //keluar dari loop, author sudah terisi, isi temp sekarang adalah ".W"
-
-                    temp = filein.nextLine(); //baris pertama deskripsi dokumen
-
-                    while (filein.hasNextLine() && temp.substring(0,1) != ".I")
+                    if(filein.hasNextLine()) //jaga-jaga kalo ada teks kosong
                     {
-                        tempDoc.description += temp;
-                        temp = filein.nextLine();
-                    }
-                    if(!filein.hasNextLine())
-                        tempDoc.description += temp;
+                        boolean flag = false;
+                        temp = filein.nextLine(); //baris pertama deskripsi dokumen
+                        //System.out.println("Selesai baca 1 dokumen, read more : " + temp);
+                        while (filein.hasNextLine() && !flag)
+                        {
+                            if(temp.length() > 2)
+                                if(temp.substring(0,2).equals(".I"))
+                                    flag = true;
+                            tempDoc.description += temp;
+                            tempDoc.description += ' ';
+                            temp = filein.nextLine();
+                        }
 
-                    docList.add(tempDoc); //masukkan dokumen ke dalam array
+                        if(!filein.hasNextLine())
+                            tempDoc.description += temp;
+
+                        docList.add(tempDoc); //masukkan dokumen ke dalam array
+                    }
+
                 }
             }
 
@@ -77,12 +105,60 @@ public class Documents {
         }
     }
 
-    public void removeStopWord(String swLocation) {
+    public void removeStopWord(String swLocation) throws FileNotFoundException {
         // remove stop word here
+        Scanner filein =  new Scanner(new FileInputStream(swLocation));
+        ArrayList<String> stopword = new ArrayList<String>();
+        while (filein.hasNextLine()){
+            String temp = filein.nextLine();
+            stopword.add(temp);
+        }
+
+        for (int i = 0; i < docList.size(); i++)
+        {
+            int j = 0;
+            while ( j < docList.get(i).description.length())
+            {
+                String temp = null;
+                while (docList.get(i).description.charAt(j) != ' ')
+                {
+                    temp += docList.get(i).description.charAt(j);
+                    j++;
+                }
+                j++;
+                //keluar dari sini berarti ada ' '
+                temp.replace(" ", "");
+
+                for (int k = 0; k < stopword.size(); k++)
+                {
+                    if(equals(temp = stopword.get(k)))
+                    {
+                        docList.get(i).description.replaceAll(temp, "");
+                    }
+                }
+
+            }
+        }
     }
 
     public void doStemming(int stemming) {
         if (stemming > 0) {
+            Porter porter = new Porter();
+            for(int i = 0; i < docList.size(); i++)
+            {
+                int j = 0;
+                while(j < docList.get(i).description.length())
+                {
+                    String temp = null;
+                    while(docList.get(i).description.charAt(j)!=' ' && j < docList.get(i).description.length())
+                    {
+                        temp += docList.get(i).description.charAt(j);
+                        j++;
+                    }
+                    docList.get(i).description.replaceAll(temp, porter.stripAffixes(temp));
+                    j++;
+                }
+            }
             // do stemming here
         }
     }
