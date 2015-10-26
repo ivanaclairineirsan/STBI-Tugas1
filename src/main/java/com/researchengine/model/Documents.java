@@ -1,8 +1,7 @@
 package com.researchengine.model;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,9 +11,8 @@ import java.util.regex.Pattern;
 public class Documents {
 
     public ArrayList<Document> docList;
-
-    /* terms per document */
     public ArrayList<InvertedTerm> invertedTerms;
+    public ArrayList<IDFClass> idfTerms;
 
     public Documents() {
     }
@@ -154,6 +152,46 @@ public class Documents {
         }
     }
 
+    public ArrayList<String> makeUnique (ArrayList<String> input)
+    {
+        ArrayList<String> temp = new ArrayList<String>();
+        for(int i = 0; i < input.size(); i++)
+        {
+            if(!temp.contains(input.get(i)))
+                temp.add(input.get(i));
+        }
+        return temp;
+    }
+
+    public void calculateIDF(){
+        ArrayList<String> tempTerms = new ArrayList<String>();
+        ArrayList<Double> tempFrequency;
+        ArrayList<String> temp;
+
+        for(int i = 0; i < docList.size(); i++)
+        {
+            temp = new ArrayList<String>(makeUnique(docList.get(i).terms));
+            for(int j = 0; j < temp.size(); j++)
+                tempTerms.add(temp.get(j));
+        }
+
+        Set<String> mySet = new HashSet<String>(tempTerms);
+        idfTerms = new ArrayList<IDFClass>();
+        for(String s: mySet){
+            IDFClass tempIDF = new IDFClass(s, Collections.frequency(tempTerms, s));
+            System.out.println("Pembilang : " + docList.size() + "Penyebut :" + tempIDF.idfNumber);
+            double tempLog = Math.log10(docList.size()/tempIDF.idfNumber);
+            tempIDF.idfNumber = tempLog;
+            idfTerms.add(tempIDF);
+        }
+
+        for(int i = 0; i < idfTerms.size(); i++)
+        {
+            System.out.println(idfTerms.get(i).term + "  " + idfTerms.get(i).idfNumber);
+        }
+
+    }
+
     public ArrayList<String[]> calculateTermFrequency(int tf, int number) {
         ArrayList<String[]> termFreq = new ArrayList<String[]>(); // list of weight per word
         String[] term; // [0]: term, [1]: frequency
@@ -267,6 +305,26 @@ public class Documents {
             for (int i = 0; i < invertedTerms.size(); i++) {
                 //CODE TO FETCH RESULTS AND WRITE FILE
                 output.write(invertedTerms.get(i).term + ',' + invertedTerms.get(i).documentNo + ',' + invertedTerms.get(i).weight + "\n");
+            }
+
+            output.close();
+            System.out.println("File has been written");
+
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+    }
+
+    public void saveToFileIDF(String ifLocation) {
+
+        try {
+            Writer output = null;
+            File file = new File(ifLocation);
+            output = new BufferedWriter(new FileWriter(file));
+
+            for (int i = 0; i < idfTerms.size(); i++) {
+                //CODE TO FETCH RESULTS AND WRITE FILE
+                output.write(idfTerms.get(i).term + ',' +idfTerms.get(i).idfNumber + "\n");
             }
 
             output.close();
