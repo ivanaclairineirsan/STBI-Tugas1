@@ -163,6 +163,8 @@ public class Documents {
                             if(termfreq.get(j)[0].equals(idfTerms.get(k).term))
                             {
                                 tempTFIDF = idfTerms.get(k).idfNumber * Double.valueOf(termfreq.get(j)[1]);
+                                IDFClass temp1 = new IDFClass(idfTerms.get(k).term, tempTFIDF);
+                                idfTerms.set(k, temp1);
                                 stop = true;
                             }
                             k++;
@@ -353,5 +355,25 @@ public class Documents {
         } catch (Exception e) {
             System.out.println(e.toString());
         }
+    }
+
+
+    public double longDocument(int number){
+        double temp = 0.0;
+        double sumTemp = 0.0;
+
+        ArrayList<InvertedTerm> tempInverted = new ArrayList<InvertedTerm>();
+        for(int i = 0; i < invertedTerms.size(); i++)
+        {
+            if(invertedTerms.get(i).documentNo == number)
+                tempInverted.add(invertedTerms.get(i));
+        }
+
+        for(int i = 0; i < tempInverted.size(); i++)
+        {
+            sumTemp += Math.pow(tempInverted.get(i).weight,2.0);
+        }
+
+        return Math.sqrt(sumTemp);
     }
 }
