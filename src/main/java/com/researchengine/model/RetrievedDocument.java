@@ -40,12 +40,16 @@ public class RetrievedDocument {
         this.weightedTerms = weightedTerms;
         this.NIAP = 0;
         this.rankedDocuments = new ArrayList<>();
+        this.normalization = normalization;
 
         computeSimilarity();
         sortRelevantTerm();
         computeAccuracy();
     }
 
+    /**
+     * the similarity procedure, to determine the rank of each document
+     */
     public void computeSimilarity() {
         double documentWeight = 0;
         String[] temp;
@@ -58,6 +62,12 @@ public class RetrievedDocument {
                         }
                     }
                 }
+            }
+
+            if (normalization) {
+                Documents d = new Documents();
+                d.invertedTerms = invertedTerms;
+                documentWeight = documentWeight / d.longDocument(document.no);
             }
 
             temp = new String[4];
@@ -90,10 +100,7 @@ public class RetrievedDocument {
         Collections.sort(rankedDocuments, new Comparator<String[]>() {
             @Override
             public int compare(String[] o1, String[] o2) {
-                if (Double.valueOf(o2[1]) > Double.valueOf(o1[1])) {
-                    return 1;
-                }
-                return -1;
+                return Double.compare(Double.valueOf(o2[1]), Double.valueOf(o1[1]));
             }
         });
     }
@@ -145,8 +152,11 @@ public class RetrievedDocument {
         NIAP = (relevantJudgement != null) ? (NIAP / (double) relevantJudgement.relevantDocs.size()) : 0;
     }
 
+    /**
+     * the avg recall-precision of the related query
+     * @param numOfRelevantDocs the relevant document
+     */
     private void computeAvgRecallPrecision(int numOfRelevantDocs) {
-        System.out.println("asdasdas: " + numOfRelevantDocs);
         recallPrecision = new double[2]; // [0]:recall [1]:precision
         recallPrecision[0] = (relevantJudgement != null) ? (numOfRelevantDocs / (double) relevantJudgement.relevantDocs.size()) : 0;
         recallPrecision[1] = (documents.size() > 0) ? (numOfRelevantDocs / (double) documents.size()) : 0;

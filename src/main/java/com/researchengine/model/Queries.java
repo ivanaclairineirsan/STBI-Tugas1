@@ -20,7 +20,7 @@ public class Queries {
     public ArrayList<Document> documents;
 
     /* terms per query */
-    public ArrayList<String> terms;
+    private ArrayList<String> terms;
     /* inverted terms */
     private ArrayList<InvertedTerm> invertedTerms;
 
@@ -377,23 +377,28 @@ public class Queries {
      * @param swLocation stopword location
      * @return list of RetrievedDocument
      */
-    public ArrayList<RetrievedDocument> search(int tf, boolean idf, boolean isNormalize, String swLocation,
-                                               String idfLocation) {
+    public ArrayList<RetrievedDocument> search(int tf, boolean idf, boolean isNormalize, boolean stemming,
+                                               String swLocation, String idfLocation) {
+        double queryWeight;
+        HashMap<String, Double> idfScore;
         ArrayList<String[]> weightedTerms;
         ArrayList<RetrievedDocument> result = new ArrayList<>();
-        HashMap<String, Double> idfScore = loadIDF(idfLocation);
-        double queryWeight;
 
         for (Query aQueryList : queryList) {
 
             queryWeight = 0;
             splitSentences(aQueryList.description);
-            removeStopWord(swLocation);
-            doStemming(true);
+            if (swLocation != null) {
+                removeStopWord(swLocation);
+            }
+            if (stemming) {
+                doStemming(true);
+            }
             weightedTerms = calculateTermFrequency(tf);
 
             for (String[] weightedTerm : weightedTerms) {
                 if (idf) {
+                    idfScore = loadIDF(idfLocation);
                     if (idfScore.containsKey(weightedTerm[0])) {
                         queryWeight += (Double.valueOf(weightedTerm[1]) * idfScore.get(weightedTerm[0]));
                     } else {
@@ -405,11 +410,29 @@ public class Queries {
                 }
             }
 
+            if (isNormalize) {
+                queryWeight = queryWeight / queryLength(weightedTerms);
+            }
+
             result.add(new RetrievedDocument(aQueryList.no, invertedTerms, aQueryList.rj, documents,
                     queryWeight, weightedTerms, isNormalize));
         }
 
 
         return result;
+    }
+
+    /**
+     * the query length
+     * @param queryTerms the terms of the query
+     * @return the length of the query
+     */
+    public double queryLength(ArrayList<String[]> queryTerms) {
+        double result = 0;
+        for (String[] queryTerm : queryTerms) {
+            result += Math.pow(Double.valueOf(queryTerm[1]), 2);
+        }
+
+        return  result;
     }
 }

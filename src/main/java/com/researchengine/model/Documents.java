@@ -33,7 +33,7 @@ public class Documents {
         return docList.get(number);
     }
 
-    public void loadDocuments(String docLocation) throws FileNotFoundException {
+    public void loadDocuments(String docLocation) {
         docList = new ArrayList<Document>();
         try {
             //load document

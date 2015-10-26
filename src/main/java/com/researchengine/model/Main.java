@@ -8,24 +8,23 @@ import java.util.ArrayList;
 public class Main {
     public static void main(String[] args) {
         Documents d = new Documents();
-        d.loadDocuments("data/CISI/cisi.all");
-//        for (int i = 0; i < 500; i++) {
-//            System.out.println(d.docList.get(i).no);
-//            System.out.println(d.docList.get(i).title);
-//            System.out.println(d.docList.get(i).author);
-//            System.out.println(d.docList.get(i).description);
-//            System.out.println();
-//        }
-        Queries q = new Queries(d.docList);
-        q.loadRelevanceJudgement("data/CISI/qrels.text");
-        q.loadQueries("data/CISI/query.text");
+        d.loadDocuments("data/ADI/adi.all");
 
-        q.loadInvertedFile("data/iFile.txt");
+//        d.removeStopWord("data/stopword.txt");
+//        d.doStemming(1);
+//        d.setInvertedTerms(1, 1);
+//        d.saveToFile("data/iFile2.txt");
+//        d.calculateIDF();
+//        d.saveToFileIDF("data/IDF2.txt");
+
+        Queries q = new Queries(d.docList);
+        q.loadInvertedFile("data/iFile2.txt");
+        q.loadRelevanceJudgement("data/ADI/qrels.text");
+        q.loadQueries("data/ADI/query.text");
 
 //        q.createQuery("What problems and concerns are there in making up descriptive titles? What difficulties are involved in automatically retrieving articles from approximate titles? What is the usual relevance of the content of articles to their titles?");
 
-        ArrayList<RetrievedDocument> results = q.search(1, true, true, "data/stopword.txt", "data/IDF.txt");
-
+        ArrayList<RetrievedDocument> results = q.search(1, true, true, true, "data/stopword.txt", "data/IDF2.txt");
 
         int idx = 0;
         // print one query
@@ -40,8 +39,6 @@ public class Main {
 
         // print the retrieved docs and its recall-precision
         System.out.println();
-        double test = 0;
-//        for (int i1 = 0; i1 < results.size(); i1++) {
         RetrievedDocument result = results.get(idx);
         System.out.print("[");
         ArrayList<String[]> output = result.rankedDocuments;
@@ -53,8 +50,6 @@ public class Main {
         System.out.println("Avg Recall-Precision: " + result.recallPrecision[0] + "-" + result.recallPrecision[1]);
         System.out.println("NIAP: " + result.NIAP);
         System.out.println(d.docList.size());
-
-//        }
 
     }
 }
