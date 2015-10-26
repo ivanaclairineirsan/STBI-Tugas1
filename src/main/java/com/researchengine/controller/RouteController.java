@@ -12,15 +12,26 @@ import org.springframework.web.servlet.ModelAndView;
 public class RouteController {
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
-	public ModelAndView indexForm() {
+	public ModelAndView indexView() {
 		return new ModelAndView("index", "command", new IndexForm());
 	}
 
-	@RequestMapping(value = "/", method = RequestMethod.POST)
-	public String indexSubmit(@ModelAttribute IndexForm indexForm, Model model) {
-		model.addAttribute("message", indexForm.getDocTF());
+	@RequestMapping(value = "experimental", method = RequestMethod.GET)
+	public String experimentalView() {
+		return "experimental";
+	}
 
-		return "retrieval";
+	@RequestMapping(value = "interactive", method = RequestMethod.GET)
+	public String interactiveView() {
+		return "interactive";
+	}
+
+	@RequestMapping(value = "/", method = RequestMethod.POST)
+	public ModelAndView indexSubmit(@ModelAttribute IndexForm indexForm, Model model) {
+		ModelAndView m = new ModelAndView("index", "command", new IndexForm());
+		m.addObject("message", indexForm.getDocTF());
+
+		return m;
 	}
 
 }
