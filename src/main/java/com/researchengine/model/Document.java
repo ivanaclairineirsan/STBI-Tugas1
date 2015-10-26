@@ -26,9 +26,9 @@ public class Document {
 
     public Document() {
         no = 0;
-        title = null;
-        author = null;
-        description = null;
+        title = "";
+        author = "";
+        description = "";
         terms = new ArrayList<String>();
     }
 
