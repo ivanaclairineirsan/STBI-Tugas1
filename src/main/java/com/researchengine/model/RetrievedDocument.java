@@ -10,25 +10,61 @@ import java.util.Comparator;
 public class RetrievedDocument {
     /* the query number */
     public int queryNo;
-    /* the retrieved docs */
-    public ArrayList<InvertedTerm> relevantTerm;
-    /* the recall and precision of each sorted related document. 0 for recall, 1 for precision */
-    public ArrayList<Double[]> RecallPrecision;
+    /* query weight */
+    public double queryWeight;
+    /* the document */
+    public ArrayList<Document> documents;
+    /* the normalization */
+    public boolean normalization;
+    /* the query chunk*/
+    public ArrayList<String[]> weightedTerms;
+    /* the invertedFile docs */
+    public ArrayList<InvertedTerm> invertedTerms;
+    /* the ranked document and the Recall and Precision*/
+    public ArrayList<String[]> rankedDocuments;
     /* the size of the relevant judgement */
     public RelevanceJudgement relevantJudgement;
+    /* the average recall-precision */
+    public double[] recallPrecision;
     /* the non-interpolated average precision */
     public double NIAP;
 
-    public RetrievedDocument(int queryNo, ArrayList<InvertedTerm> relevantTerm, RelevanceJudgement relevantJudgement) {
+    public RetrievedDocument(int queryNo, ArrayList<InvertedTerm> relevantTerm, RelevanceJudgement relevantJudgement,
+                             ArrayList<Document> documents, double queryWeight, ArrayList<String[]> weightedTerms,
+                             boolean normalization) {
         this.queryNo = queryNo;
-        this.relevantTerm = relevantTerm;
+        this.invertedTerms = relevantTerm;
         this.relevantJudgement = relevantJudgement;
+        this.queryWeight = queryWeight;
+        this.documents = documents;
+        this.weightedTerms = weightedTerms;
         this.NIAP = 0;
+        this.rankedDocuments = new ArrayList<>();
 
-        if (relevantTerm != null) {
-            RecallPrecision = new ArrayList<>();
-            sortRelevantTerm();
-            computeAccuracy();
+        computeSimilarity();
+        sortRelevantTerm();
+        computeAccuracy();
+    }
+
+    public void computeSimilarity() {
+        double documentWeight = 0;
+        String[] temp;
+        for (Document document : documents) {
+            for (String[] weightedTerm : weightedTerms) {
+                for (InvertedTerm invertedTerm : invertedTerms) {
+                    if (invertedTerm.term.equals(weightedTerm[0])) {
+                        if (invertedTerm.documentNo == document.no) {
+                            documentWeight += invertedTerm.weight;
+                        }
+                    }
+                }
+            }
+
+            temp = new String[4];
+            temp[0] = String.valueOf(document.no);
+            temp[1] = String.valueOf(queryWeight * documentWeight);
+            rankedDocuments.add(temp);
+            documentWeight = 0;
         }
     }
 
@@ -51,10 +87,10 @@ public class RetrievedDocument {
      * sort the result by its weight
      */
     private void sortRelevantTerm() {
-        Collections.sort(relevantTerm, new Comparator<InvertedTerm>() {
+        Collections.sort(rankedDocuments, new Comparator<String[]>() {
             @Override
-            public int compare(InvertedTerm it1, InvertedTerm it2) {
-                if (it2.weight > it1.weight) {
+            public int compare(String[] o1, String[] o2) {
+                if (Double.valueOf(o2[1]) > Double.valueOf(o1[1])) {
                     return 1;
                 }
                 return -1;
@@ -70,8 +106,8 @@ public class RetrievedDocument {
         int lastRelevant = 0;
         boolean addNIAP = false;
 
-        for (int i = 0; i < relevantTerm.size(); i++) {
-            if (isRelevant(relevantTerm.get(i).documentNo)) {
+        for (int i = 0; i < rankedDocuments.size(); i++) {
+            if (isRelevant(Integer.valueOf(rankedDocuments.get(i)[0]))) {
                 lastRelevant += 1;
                 addNIAP = true;
             }
@@ -92,17 +128,27 @@ public class RetrievedDocument {
                 temp[1] = 0.0;
             }
 
-            RecallPrecision.add(temp);
+            String[] currentDocument = rankedDocuments.get(i);
+            currentDocument[2] = String.valueOf(temp[0]);
+            currentDocument[3] = String.valueOf(temp[1]);
+            rankedDocuments.set(i, currentDocument);
         }
 
-        computeNonInterpolatedAvgPrecision(lastRelevant);
+        computeNonInterpolatedAvgPrecision();
+        computeAvgRecallPrecision(lastRelevant);
     }
 
     /**
      * count the non interpolated average precision of all the query
-     * @return non interpolated average precision
      */
-    private void computeNonInterpolatedAvgPrecision(int numOfRelevantDocs) {
-        NIAP = (numOfRelevantDocs > 0) ? (NIAP / (double) numOfRelevantDocs) : 0;
+    private void computeNonInterpolatedAvgPrecision() {
+        NIAP = (relevantJudgement != null) ? (NIAP / (double) relevantJudgement.relevantDocs.size()) : 0;
+    }
+
+    private void computeAvgRecallPrecision(int numOfRelevantDocs) {
+        System.out.println("asdasdas: " + numOfRelevantDocs);
+        recallPrecision = new double[2]; // [0]:recall [1]:precision
+        recallPrecision[0] = (relevantJudgement != null) ? (numOfRelevantDocs / (double) relevantJudgement.relevantDocs.size()) : 0;
+        recallPrecision[1] = (documents.size() > 0) ? (numOfRelevantDocs / (double) documents.size()) : 0;
     }
 }

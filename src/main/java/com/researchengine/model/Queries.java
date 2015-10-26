@@ -3,6 +3,7 @@ package com.researchengine.model;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,13 +16,16 @@ public class Queries {
     public ArrayList<RelevanceJudgement> rjList; // relevance judgement
     /* list of query + relevance judgement */
     public ArrayList<Query> queryList;
+    /* the documents */
+    public ArrayList<Document> documents;
 
     /* terms per query */
     public ArrayList<String> terms;
     /* inverted terms */
     private ArrayList<InvertedTerm> invertedTerms;
 
-    public Queries() {
+    public Queries(ArrayList<Document> documents) {
+        this.documents = documents;
     }
 
     /**
@@ -29,7 +33,7 @@ public class Queries {
      * @param query the query
      */
     public void createQuery(String query) {
-        queryList = new ArrayList<Query>();
+        queryList = new ArrayList<>();
         queryList.add(new Query(0, query, null));
     }
 
@@ -41,7 +45,7 @@ public class Queries {
         Scanner input;
         String[] temp;
         InvertedTerm term;
-        invertedTerms = new ArrayList<InvertedTerm>();
+        invertedTerms = new ArrayList<>();
         try {
             input = new Scanner(new FileReader(ifLocation));
             while (input.hasNextLine()){
@@ -55,11 +59,32 @@ public class Queries {
     }
 
     /**
+     * load inverted file to the invertedTerms
+     * @param ifLocation the location of the inverted file
+     */
+    public HashMap<String, Double> loadIDF(String ifLocation) {
+        Scanner input;
+        String[] temp;
+        HashMap<String, Double> idf = new HashMap<>();
+        try {
+            input = new Scanner(new FileReader(ifLocation));
+            while (input.hasNextLine()){
+                temp = input.nextLine().split(",");
+                idf.put(temp[0], Double.valueOf(temp[1]));
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return idf;
+    }
+
+    /**
      * load relevance judgement to the rjList
      * @param rjlocation the location of the relevance judgement
      */
     public void loadRelevanceJudgement(String rjlocation) {
-        rjList = new ArrayList<RelevanceJudgement>();
+        rjList = new ArrayList<>();
         RelevanceJudgement relJudge = null;
         rjList.add(new RelevanceJudgement(-1,null));
 
@@ -114,7 +139,7 @@ public class Queries {
      * @param querylocation the location of the query
      */
     public void loadQueries(String querylocation) {
-        queryList = new ArrayList<Query>();
+        queryList = new ArrayList<>();
         Query query;
         boolean contentMode = false, initialize = false;
 
@@ -186,7 +211,7 @@ public class Queries {
         Pattern p = Pattern.compile("\\w+");
         Matcher m = p.matcher(sentence);
 
-        terms=new ArrayList<String>();
+        terms=new ArrayList<>();
         while(m.find()) {
             terms.add(m.group());
         }
@@ -198,7 +223,7 @@ public class Queries {
      */
     public void removeStopWord(String swLocation) {
         Scanner input;
-        ArrayList<String> stopwords = new ArrayList<String>();
+        ArrayList<String> stopwords = new ArrayList<>();
         try {
             input = new Scanner(new FileReader(swLocation));
             while (input.hasNextLine()){
@@ -241,7 +266,7 @@ public class Queries {
      * @return list of the terms and the weights related to the used method
      */
     public ArrayList<String[]> calculateTermFrequency(int tf) {
-        ArrayList<String[]> termFreq = new ArrayList<String[]>(); // list of weight per word
+        ArrayList<String[]> termFreq = new ArrayList<>(); // list of weight per word
         String[] term; // [0]: term, [1]: frequency
         int counter;
 
@@ -352,45 +377,38 @@ public class Queries {
      * @param swLocation stopword location
      * @return list of RetrievedDocument
      */
-    public ArrayList<RetrievedDocument> search(int tf, boolean idf, boolean isNormalize, String swLocation) {
+    public ArrayList<RetrievedDocument> search(int tf, boolean idf, boolean isNormalize, String swLocation,
+                                               String idfLocation) {
         ArrayList<String[]> weightedTerms;
-        ArrayList<RetrievedDocument> result = new ArrayList<RetrievedDocument>();
-        ArrayList<InvertedTerm> termsRelated = new ArrayList<InvertedTerm>();
+        ArrayList<RetrievedDocument> result = new ArrayList<>();
+        HashMap<String, Double> idfScore = loadIDF(idfLocation);
+        double queryWeight;
 
         for (Query aQueryList : queryList) {
 
+            queryWeight = 0;
             splitSentences(aQueryList.description);
             removeStopWord(swLocation);
             doStemming(true);
             weightedTerms = calculateTermFrequency(tf);
 
             for (String[] weightedTerm : weightedTerms) {
-                for (InvertedTerm invertedTerm : invertedTerms) {
-                    if (invertedTerm.term.equals(weightedTerm[0])) {
-                        Document newDoc = new Document(invertedTerm.documentNo, "a", "b", "c");
-                        aQueryList.addRelevantDocument(newDoc);
-
-                        double queryWeight = Double.valueOf(weightedTerm[1]);
-                        double docWeight = 1;
-                        if (idf) {
-                            queryWeight = queryWeight * invertedTerm.weight;
-/*-------------------*/     docWeight = docWeight * invertedTerm.weight; // * tf document -------------------------------------------------------------------------
-                        }
-
-                        if (isNormalize) {
-                            // to be defined
-                        }
-
-                        termsRelated.add(new InvertedTerm(invertedTerm.term, invertedTerm.documentNo, queryWeight * docWeight));
+                if (idf) {
+                    if (idfScore.containsKey(weightedTerm[0])) {
+                        queryWeight += (Double.valueOf(weightedTerm[1]) * idfScore.get(weightedTerm[0]));
+                    } else {
+                        queryWeight += Double.valueOf(weightedTerm[1]);
                     }
+
+                } else {
+                    queryWeight += Double.valueOf(weightedTerm[1]);
                 }
             }
 
-            result.add(new RetrievedDocument(aQueryList.no, termsRelated, aQueryList.rj));
-            termsRelated = new ArrayList<InvertedTerm>();
-            aQueryList.countRecall();
-            aQueryList.countPrecision();
+            result.add(new RetrievedDocument(aQueryList.no, invertedTerms, aQueryList.rj, documents,
+                    queryWeight, weightedTerms, isNormalize));
         }
+
 
         return result;
     }

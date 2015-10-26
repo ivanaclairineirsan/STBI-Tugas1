@@ -7,13 +7,24 @@ import java.util.ArrayList;
  */
 public class Main {
     public static void main(String[] args) {
-        Queries q = new Queries();
-//        q.loadRelevanceJudgement("data/CISI/qrels.text");
-//        q.loadQueries("data/CISI/query.text");
+        Documents d = new Documents();
+        d.loadDocuments("data/CISI/cisi.all");
+//        for (int i = 0; i < 500; i++) {
+//            System.out.println(d.docList.get(i).no);
+//            System.out.println(d.docList.get(i).title);
+//            System.out.println(d.docList.get(i).author);
+//            System.out.println(d.docList.get(i).description);
+//            System.out.println();
+//        }
+        Queries q = new Queries(d.docList);
+        q.loadRelevanceJudgement("data/CISI/qrels.text");
+        q.loadQueries("data/CISI/query.text");
+
         q.loadInvertedFile("data/iFile.txt");
 
-        q.createQuery("What problems and concerns are there in making up descriptive titles? What difficulties are involved in automatically retrieving articles from approximate titles? What is the usual relevance of the content of articles to their titles?");
-        ArrayList<RetrievedDocument> results = q.search(0, true, true, "data/stopword.txt");
+//        q.createQuery("What problems and concerns are there in making up descriptive titles? What difficulties are involved in automatically retrieving articles from approximate titles? What is the usual relevance of the content of articles to their titles?");
+
+        ArrayList<RetrievedDocument> results = q.search(1, true, true, "data/stopword.txt", "data/IDF.txt");
 
 
         int idx = 0;
@@ -27,33 +38,23 @@ public class Main {
             System.out.print("[No Relevance Judgement found!]");
         }
 
-        // print retrieved docs related to the query above
-        if (q.queryList.get(idx).relevantDocList.size() != 0) {
-            System.out.print(", [");
-            for (int i = 0; i < q.queryList.get(idx).relevantDocList.size()-1; i++) {
-                System.out.print(q.queryList.get(idx).relevantDocList.get(i).no + ", ");
-            }
-            System.out.print(q.queryList.get(idx).relevantDocList.get(q.queryList.get(idx).relevantDocList.size() - 1).no + "]");
-        } else {
-            System.out.print(", [No Relevant Documents found!]");
-        }
-
-        // print recall and precision related to the query above
-        System.out.print(", recall: " + q.queryList.get(idx).recall + ", precision: " + q.queryList.get(idx).precission);
-
         // print the retrieved docs and its recall-precision
         System.out.println();
-        for (RetrievedDocument result : results) {
-            System.out.print(result.queryNo + ": [");
-            ArrayList<InvertedTerm> relevantTerm = result.relevantTerm;
-            for (int i = 0; i < relevantTerm.size(); i++) {
-                InvertedTerm term = relevantTerm.get(i);
-                Double[] score = result.RecallPrecision.get(i);
-                System.out.print(term.documentNo + "(" + score[0] + "-" + score[1] + ") " + ", ");
-//                System.out.print(term.documentNo + "(" + term.weight + "), ");
-            }
-            System.out.println("]" + result.NIAP);
+        double test = 0;
+//        for (int i1 = 0; i1 < results.size(); i1++) {
+        RetrievedDocument result = results.get(idx);
+        System.out.print("[");
+        ArrayList<String[]> output = result.rankedDocuments;
+        for (int i = 0; i < 50; i++) {
+//                System.out.println(output.get(i)[0] + " : " + output.get(i)[1]);
+            System.out.println(output.get(i)[0] + " : " + output.get(i)[1] + "(" + output.get(i)[2] + "-" + output.get(i)[3] + ")");
         }
+        System.out.println("]");
+        System.out.println("Avg Recall-Precision: " + result.recallPrecision[0] + "-" + result.recallPrecision[1]);
+        System.out.println("NIAP: " + result.NIAP);
+        System.out.println(d.docList.size());
+
+//        }
 
     }
 }
