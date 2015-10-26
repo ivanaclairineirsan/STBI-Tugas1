@@ -25,7 +25,7 @@ public class Documents {
         loadDocuments(docLocation);
         removeStopWord(swLocation);
         doStemming(stemming);
-        setInvertedTerms(tf);
+        setInvertedTerms(tf, idf);
         //  saveToFile(itList, ifLocation, swLocation, stemming);
     }
 
@@ -141,14 +141,35 @@ public class Documents {
         }
     }
 
-    public void setInvertedTerms(int tf) {
+    public void setInvertedTerms(int tf, int idf) {
         invertedTerms = new ArrayList<InvertedTerm>();
         for (int i = 0; i < docList.size(); i++) {
             ArrayList<String[]> termfreq;
             termfreq = calculateTermFrequency(tf, i);
+
+
+            if(idf == 0)
             for (int j = 0; j < termfreq.size(); j++) {
                 invertedTerms.add(new InvertedTerm(termfreq.get(j)[0], docList.get(i).no, Double.valueOf(termfreq.get(j)[1])));
             }
+            else if(idf == 1)
+                {
+                    calculateIDF();
+                    double tempTFIDF = 0.0;
+                    for (int j = 0; j < termfreq.size(); j++) {
+                        int k = 0; boolean stop = false;
+                        while(k<idfTerms.size() && !stop)
+                        {
+                            if(termfreq.get(j)[0].equals(idfTerms.get(k).term))
+                            {
+                                tempTFIDF = idfTerms.get(k).idfNumber * Double.valueOf(termfreq.get(j)[1]);
+                                stop = true;
+                            }
+                            k++;
+                        }
+                        invertedTerms.add(new InvertedTerm(termfreq.get(j)[0], docList.get(i).no, tempTFIDF));
+                    }
+                }
         }
     }
 
@@ -303,7 +324,6 @@ public class Documents {
             output = new BufferedWriter(new FileWriter(file));
 
             for (int i = 0; i < invertedTerms.size(); i++) {
-                //CODE TO FETCH RESULTS AND WRITE FILE
                 output.write(invertedTerms.get(i).term + ',' + invertedTerms.get(i).documentNo + ',' + invertedTerms.get(i).weight + "\n");
             }
 
