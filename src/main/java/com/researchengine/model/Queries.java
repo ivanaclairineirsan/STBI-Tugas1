@@ -29,7 +29,7 @@ public class Queries {
      * @param query the query
      */
     public void createQuery(String query) {
-        queryList = new ArrayList<>();
+        queryList = new ArrayList<Query>();
         queryList.add(new Query(0, query, null));
     }
 
@@ -41,7 +41,7 @@ public class Queries {
         Scanner input;
         String[] temp;
         InvertedTerm term;
-        invertedTerms = new ArrayList<>();
+        invertedTerms = new ArrayList<InvertedTerm>();
         try {
             input = new Scanner(new FileReader(ifLocation));
             while (input.hasNextLine()){
@@ -59,7 +59,7 @@ public class Queries {
      * @param rjlocation the location of the relevance judgement
      */
     public void loadRelevanceJudgement(String rjlocation) {
-        rjList = new ArrayList<>();
+        rjList = new ArrayList<RelevanceJudgement>();
         RelevanceJudgement relJudge = null;
         rjList.add(new RelevanceJudgement(-1,null));
 
@@ -114,7 +114,7 @@ public class Queries {
      * @param querylocation the location of the query
      */
     public void loadQueries(String querylocation) {
-        queryList = new ArrayList<>();
+        queryList = new ArrayList<Query>();
         Query query;
         boolean contentMode = false, initialize = false;
 
@@ -186,7 +186,7 @@ public class Queries {
         Pattern p = Pattern.compile("\\w+");
         Matcher m = p.matcher(sentence);
 
-        terms=new ArrayList<>();
+        terms=new ArrayList<String>();
         while(m.find()) {
             terms.add(m.group());
         }
@@ -198,7 +198,7 @@ public class Queries {
      */
     public void removeStopWord(String swLocation) {
         Scanner input;
-        ArrayList<String> stopwords = new ArrayList<>();
+        ArrayList<String> stopwords = new ArrayList<String>();
         try {
             input = new Scanner(new FileReader(swLocation));
             while (input.hasNextLine()){
@@ -241,7 +241,7 @@ public class Queries {
      * @return list of the terms and the weights related to the used method
      */
     public ArrayList<String[]> calculateTermFrequency(int tf) {
-        ArrayList<String[]> termFreq = new ArrayList<>(); // list of weight per word
+        ArrayList<String[]> termFreq = new ArrayList<String[]>(); // list of weight per word
         String[] term; // [0]: term, [1]: frequency
         int counter;
 
@@ -354,8 +354,8 @@ public class Queries {
      */
     public ArrayList<RetrievedDocument> search(int tf, boolean idf, boolean isNormalize, String swLocation) {
         ArrayList<String[]> weightedTerms;
-        ArrayList<RetrievedDocument> result = new ArrayList<>();
-        ArrayList<InvertedTerm> termsRelated = new ArrayList<>();
+        ArrayList<RetrievedDocument> result = new ArrayList<RetrievedDocument>();
+        ArrayList<InvertedTerm> termsRelated = new ArrayList<InvertedTerm>();
 
         for (Query aQueryList : queryList) {
 
@@ -387,7 +387,7 @@ public class Queries {
             }
 
             result.add(new RetrievedDocument(aQueryList.no, termsRelated, aQueryList.rj));
-            termsRelated = new ArrayList<>();
+            termsRelated = new ArrayList<InvertedTerm>();
             aQueryList.countRecall();
             aQueryList.countPrecision();
         }

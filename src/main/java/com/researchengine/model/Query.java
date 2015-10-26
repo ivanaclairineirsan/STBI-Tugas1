@@ -29,7 +29,7 @@ public class Query {
     public Query(int no, String description, RelevanceJudgement rj) {
         this.no = no;
         this.description = description;
-        this.relevantDocList = new ArrayList<>();
+        this.relevantDocList = new ArrayList<Document>();
         this.rj = rj;
     }
 
