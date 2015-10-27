@@ -148,7 +148,6 @@ public class Documents {
             ArrayList<String[]> termfreq;
             termfreq = calculateTermFrequency(tf, i);
 
-
             if(idf.equals("none"))
                 for (int j = 0; j < termfreq.size(); j++) {
                     invertedTerms.add(new InvertedTerm(termfreq.get(j)[0], docList.get(i).no, Double.valueOf(termfreq.get(j)[1])));
