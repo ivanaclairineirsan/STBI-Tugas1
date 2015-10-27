@@ -147,14 +147,12 @@ public class Documents {
             ArrayList<String[]> termfreq;
             termfreq = calculateTermFrequency(tf, i);
 
-
             if(idf == 0)
             for (int j = 0; j < termfreq.size(); j++) {
                 invertedTerms.add(new InvertedTerm(termfreq.get(j)[0], docList.get(i).no, Double.valueOf(termfreq.get(j)[1])));
             }
             else if(idf == 1)
                 {
-                    calculateIDF();
                     double tempTFIDF = 0.0;
                     for (int j = 0; j < termfreq.size(); j++) {
                         int k = 0; boolean stop = false;
@@ -202,15 +200,9 @@ public class Documents {
         idfTerms = new ArrayList<IDFClass>();
         for(String s: mySet){
             IDFClass tempIDF = new IDFClass(s, Collections.frequency(tempTerms, s));
-            System.out.println("Pembilang : " + docList.size() + "Penyebut :" + tempIDF.idfNumber);
             double tempLog = Math.log10(docList.size()/tempIDF.idfNumber);
             tempIDF.idfNumber = tempLog;
             idfTerms.add(tempIDF);
-        }
-
-        for(int i = 0; i < idfTerms.size(); i++)
-        {
-            System.out.println(idfTerms.get(i).term + "  " + idfTerms.get(i).idfNumber);
         }
 
     }
