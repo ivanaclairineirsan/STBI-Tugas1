@@ -81,9 +81,9 @@ public class Queries {
 
     /**
      * load relevance judgement to the rjList
-     * @param rjlocation the location of the relevance judgement
+     * @param rjLocation the location of the relevance judgement
      */
-    public void loadRelevanceJudgement(String rjlocation) {
+    public void loadRelevanceJudgement(String rjLocation) {
         rjList = new ArrayList<>();
         RelevanceJudgement relJudge = null;
         rjList.add(new RelevanceJudgement(-1,null));
@@ -91,7 +91,7 @@ public class Queries {
         Scanner input;
         String[] temp;
         try {
-            input = new Scanner(new FileReader(rjlocation));
+            input = new Scanner(new FileReader(rjLocation));
             while (input.hasNextLine()){
                 temp = input.nextLine().split("\\s+");
                 if (relJudge == null) {
@@ -265,13 +265,13 @@ public class Queries {
      * @param tf select the tf method (0: no-TF, 1: raw-TF, 2: binary-TF, 3: augmented-TF, 4: logarithmic-TF
      * @return list of the terms and the weights related to the used method
      */
-    public ArrayList<String[]> calculateTermFrequency(int tf) {
+    public ArrayList<String[]> calculateTermFrequency(String tf) {
         ArrayList<String[]> termFreq = new ArrayList<>(); // list of weight per word
         String[] term; // [0]: term, [1]: frequency
         int counter;
 
         switch(tf) {
-            case 0: // none
+            case "none": // none
                 while(terms.size() > 0) {
                     term = new String[2];
                     term[0] = terms.get(0);
@@ -286,7 +286,7 @@ public class Queries {
                     termFreq.add(term);
                 }
                 break;
-            case 1: // raw
+            case "raw": // raw
                 while(terms.size() > 0) {
                     term = new String[2];
                     counter = 1;
@@ -303,7 +303,7 @@ public class Queries {
                     termFreq.add(term);
                 }
                 break;
-            case 2: // binary
+            case "binary": // binary
                 while(terms.size() > 0) {
                     term = new String[2]; // [0]: term, [1]: frequency
                     term[0] = terms.get(0);
@@ -318,7 +318,7 @@ public class Queries {
                     termFreq.add(term);
                 }
                 break;
-            case 3: // augmented
+            case "augmented": // augmented
                 int maxCount = -1;
                 while(terms.size() > 0) {
                     term = new String[2]; // [0]: term, [1]: frequency
@@ -345,7 +345,7 @@ public class Queries {
                     termFreq.set(i,temp);
                 }
                 break;
-            case 4: // logarithmic
+            case "logarithmic": // logarithmic
                 while(terms.size() > 0) {
                     term = new String[2]; // [0]: term, [1]: frequency
                     counter = 1;
@@ -377,7 +377,7 @@ public class Queries {
      * @param swLocation stopword location
      * @return list of RetrievedDocument
      */
-    public ArrayList<RetrievedDocument> search(int tf, boolean idf, boolean isNormalize, boolean stemming,
+    public ArrayList<RetrievedDocument> search(String tf, String idf, String isNormalize, String stemming,
                                                String swLocation, String idfLocation) {
         double queryWeight;
         HashMap<String, Double> idfScore;
@@ -391,13 +391,13 @@ public class Queries {
             if (swLocation != null) {
                 removeStopWord(swLocation);
             }
-            if (stemming) {
+            if (stemming.equals("use")) {
                 doStemming(true);
             }
             weightedTerms = calculateTermFrequency(tf);
 
             for (String[] weightedTerm : weightedTerms) {
-                if (idf) {
+                if (idf.equals("use")) {
                     idfScore = loadIDF(idfLocation);
                     if (idfScore.containsKey(weightedTerm[0])) {
                         queryWeight += (Double.valueOf(weightedTerm[1]) * idfScore.get(weightedTerm[0]));
@@ -410,7 +410,7 @@ public class Queries {
                 }
             }
 
-            if (isNormalize) {
+            if (isNormalize.equals("use")) {
                 queryWeight = queryWeight / queryLength(weightedTerms);
             }
 

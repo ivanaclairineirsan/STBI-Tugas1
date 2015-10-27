@@ -57,82 +57,59 @@
   <div class="starter-template">
     <h1 align="center">Experimental Result</h1>
 
-    <div class="row">
-      <div class="col-md-6" align="right">
-        <label for="docPrecision">Precision</label>
-      </div>
-      <div class="col-md-6">
-        <div id="docPrecision">1.000</div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-6" align="right">
-        <label for="docRecall">Recall</label>
-      </div>
-      <div class="col-md-6">
-        <div id="docRecall">1.000</div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-6" align="right">
-        <label for="docNIAP">Non-Interpolted Average Precision</label>
-      </div>
-      <div class="col-md-6">
-        <div id="docNIAP">1.000</div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-12" align="center">
-        <span>Query #1</span>
-      </div>
-
-      <div class="col-md-9">
-        <table class="table">
-          <tr>
-            <th>Ranking</th>
-            <th>Document #</th>
-            <th>Document Title</th>
-          </tr>
-          <tr>
-            <td class="col-md-2">1</td>
-            <td class="col-md-2">23</td>
-            <td class="col-md-8">Query expansion using heterogeneous thesauri</td>
-          </tr>
-        </table>
-      </div>
-
-      <div class="col-md-3">
-        <div class="row">
-          <div class="col-md-6" align="right">
-            <label for="queryPrecision">Precision</label>
-          </div>
-          <div class="col-md-6">
-            <div id="queryPrecision">1.000</div>
-          </div>
+    <core:forEach var="n" begin="0" end="${docs.size()-1}">
+      <div class="row">
+        <div class="col-md-12" align="center">
+          <span>Query #${n+1}</span>
         </div>
 
-        <div class="row">
-          <div class="col-md-6" align="right">
-            <label for="queryRecall">Recall</label>
-          </div>
-          <div class="col-md-6">
-            <div id="queryRecall">1.000</div>
-          </div>
+        <div class="col-md-9">
+          <table class="table">
+            <tr>
+              <th>Ranking</th>
+              <th>Document #</th>
+              <th>Document Title</th>
+            </tr>
+            <core:forEach var="i" begin="0" end="9">
+              <tr>
+                <td class="col-md-2">${i+1}</td>
+                <td class="col-md-2">${docs[n].rankedDocuments[i][0]}</td>
+                <td class="col-md-8">${docs[n].rankedDocuments[i][4]}</td>
+              </tr>
+            </core:forEach>
+          </table>
         </div>
 
-        <div class="row">
-          <div class="col-md-6" align="right">
-            <label for="queryNIAP">Non-Interpolted Average Precision</label>
+        <div class="col-md-3">
+          <div class="row">
+            <div class="col-md-6" align="right">
+              <label for="queryPrecision">Precision</label>
+            </div>
+            <div class="col-md-6">
+              <div id="queryPrecision">${docs[n].recallPrecision[1]}</div>
+            </div>
           </div>
-          <div class="col-md-6">
-            <div id="queryNIAP">1.000</div>
+
+          <div class="row">
+            <div class="col-md-6" align="right">
+              <label for="queryRecall">Recall</label>
+            </div>
+            <div class="col-md-6">
+              <div id="queryRecall">${docs[n].recallPrecision[0]}</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6" align="right">
+              <label for="queryNIAP">Non-Interpolated Average Precision</label>
+            </div>
+            <div class="col-md-6">
+              <div id="queryNIAP">${docs[n].NIAP}</div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </core:forEach>
   </div><!-- /.container -->
 
 

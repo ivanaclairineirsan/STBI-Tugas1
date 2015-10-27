@@ -59,18 +59,20 @@
     <h1 align="center">Interactive Result</h1>
 
     <div class="row">
-      <div class="col-md-12">
-        <div class="input-group">
-          <input type="text" class="form-control" placeholder="Search">
-              <span class="input-group-btn">
-                <button class="btn btn-danger" type="button">
-                  <span class="glyphicon glyphicon-search"></span>
-                </button>
-              </span>
+      <form:form action="/interactive" method="POST" enctype="multipart/form-data">
+        <div class="col-md-12">
+          <div class="input-group">
+            <form:input type="text" class="form-control" path="query" placeholder="Search" />
+            <span class="input-group-btn">
+              <button class="btn btn-danger" type="submit">
+                <span class="glyphicon glyphicon-search"></span>
+              </button>
+            </span>
+          </div>
         </div>
-      </div>
+      </form:form>
 
-      <core:if test="${message != null}">
+      <core:if test="${docs != null}">
         <div class="col-md-12">
           <table class="table">
             <tr>
@@ -78,11 +80,13 @@
               <th>Document #</th>
               <th>Document Title</th>
             </tr>
-            <tr>
-              <td class="col-md-2">1</td>
-              <td class="col-md-2">23</td>
-              <td class="col-md-8">Query expansion using heterogeneous thesauri</td>
-            </tr>
+            <core:forEach var="i" begin="0" end="${docs[0].rankedDocuments.size()-1}">
+              <tr>
+                <td class="col-md-2">${i+1}</td>
+                <td class="col-md-2">${docs[0].rankedDocuments[i][0]}</td>
+                <td class="col-md-8">${docs[0].rankedDocuments[i][4]}</td>
+              </tr>
+            </core:forEach>
           </table>
         </div>
       </core:if>

@@ -15,23 +15,50 @@ public class RetrievedDocument {
     /* the document */
     public ArrayList<Document> documents;
     /* the normalization */
-    public boolean normalization;
+    public String normalization;
     /* the query chunk*/
     public ArrayList<String[]> weightedTerms;
     /* the invertedFile docs */
     public ArrayList<InvertedTerm> invertedTerms;
+
+    public ArrayList<String[]> getRankedDocuments() {
+        return rankedDocuments;
+    }
+
+    public void setRankedDocuments(ArrayList<String[]> rankedDocuments) {
+        this.rankedDocuments = rankedDocuments;
+    }
+
     /* the ranked document and the Recall and Precision*/
     public ArrayList<String[]> rankedDocuments;
     /* the size of the relevant judgement */
     public RelevanceJudgement relevantJudgement;
+
+    public double[] getRecallPrecision() {
+        return recallPrecision;
+    }
+
+    public void setRecallPrecision(double[] recallPrecision) {
+        this.recallPrecision = recallPrecision;
+    }
+
     /* the average recall-precision */
     public double[] recallPrecision;
+
+    public double getNIAP() {
+        return NIAP;
+    }
+
+    public void setNIAP(double NIAP) {
+        this.NIAP = NIAP;
+    }
+
     /* the non-interpolated average precision */
     public double NIAP;
 
     public RetrievedDocument(int queryNo, ArrayList<InvertedTerm> relevantTerm, RelevanceJudgement relevantJudgement,
                              ArrayList<Document> documents, double queryWeight, ArrayList<String[]> weightedTerms,
-                             boolean normalization) {
+                             String normalization) {
         this.queryNo = queryNo;
         this.invertedTerms = relevantTerm;
         this.relevantJudgement = relevantJudgement;
@@ -64,15 +91,16 @@ public class RetrievedDocument {
                 }
             }
 
-            if (normalization) {
+            if (normalization.equals("use")) {
                 Documents d = new Documents();
                 d.invertedTerms = invertedTerms;
                 documentWeight = documentWeight / d.longDocument(document.no);
             }
 
-            temp = new String[4];
+            temp = new String[5];
             temp[0] = String.valueOf(document.no);
             temp[1] = String.valueOf(queryWeight * documentWeight);
+            temp[4] = String.valueOf(document.title);
             rankedDocuments.add(temp);
             documentWeight = 0;
         }

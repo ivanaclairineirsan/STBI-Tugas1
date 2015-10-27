@@ -2,6 +2,11 @@ package com.researchengine.model.form;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 /**
  * Created by christangga on 14-Oct-15.
  */
@@ -13,7 +18,7 @@ public class IndexForm {
 
     private String docTF;
     private String docIDF;
-    private String docNormalization;
+    //    private String docNormalization;
     private String docStemming;
 
     private String queryTF;
@@ -21,8 +26,33 @@ public class IndexForm {
     private String queryNormalization;
     private String queryStemming;
 
+    private String filePath;
+
+    public IndexForm() {}
+
+    public IndexForm(String filePath) {
+        this.filePath = filePath;
+    }
+
     public MultipartFile getDocLocation() {
         return docLocation;
+    }
+
+    public String getDocString() {
+        try {
+            if (!docLocation.isEmpty()) {
+                byte[] bytes = docLocation.getBytes();
+                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filePath + docLocation.getOriginalFilename())));
+                stream.write(bytes);
+                stream.close();
+
+                return docLocation.getOriginalFilename();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return "";
     }
 
     public void setDocLocation(MultipartFile docLocation) {
@@ -33,6 +63,23 @@ public class IndexForm {
         return queryLocation;
     }
 
+    public String getQueryString() {
+        try {
+            if (!queryLocation.isEmpty()) {
+                byte[] bytes = queryLocation.getBytes();
+                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filePath + queryLocation.getOriginalFilename())));
+                stream.write(bytes);
+                stream.close();
+
+                return queryLocation.getOriginalFilename();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
     public void setQueryLocation(MultipartFile queryLocation) {
         this.queryLocation = queryLocation;
     }
@@ -41,12 +88,46 @@ public class IndexForm {
         return rjLocation;
     }
 
+    public String getRjString() {
+        try {
+            if (!rjLocation.isEmpty()) {
+                byte[] bytes = rjLocation.getBytes();
+                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filePath + rjLocation.getOriginalFilename())));
+                stream.write(bytes);
+                stream.close();
+
+                return rjLocation.getOriginalFilename();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
     public void setRjLocation(MultipartFile rjLocation) {
         this.rjLocation = rjLocation;
     }
 
     public MultipartFile getSwLocation() {
         return swLocation;
+    }
+
+    public String getSwString() {
+        try {
+            if (!swLocation.isEmpty()) {
+                byte[] bytes = swLocation.getBytes();
+                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filePath + swLocation.getOriginalFilename())));
+                stream.write(bytes);
+                stream.close();
+
+                return rjLocation.getOriginalFilename();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return "";
     }
 
     public void setSwLocation(MultipartFile swLocation) {
@@ -77,13 +158,17 @@ public class IndexForm {
         this.docStemming = docStemming;
     }
 
-    public String getDocNormalization() {
-        return docNormalization;
-    }
-
-    public void setDocNormalization(String docNormalization) {
-        this.docNormalization = docNormalization;
-    }
+//    public int getDocNormalization() {
+//        if (docNormalization.equals("use")) {
+//            return 1;
+//        } else {
+//            return 0;
+//        }
+//    }
+//
+//    public void setDocNormalization(String docNormalization) {
+//        this.docNormalization = docNormalization;
+//    }
 
     public String getQueryTF() {
         return queryTF;

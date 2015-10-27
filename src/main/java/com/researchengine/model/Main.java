@@ -7,32 +7,32 @@ import java.util.ArrayList;
  */
 public class Main {
     public static void main(String[] args) {
-        Documents d = new Documents();
-        d.loadDocuments("data/ADI/adi.all");
+        Documents docs = new Documents();
+        docs.loadDocuments("data/ADI/adi.all");
 
-//        d.removeStopWord("data/stopword.txt");
-//        d.doStemming(1);
-//        d.setInvertedTerms(1, 1);
-//        d.saveToFile("data/iFile2.txt");
-//        d.calculateIDF();
-//        d.saveToFileIDF("data/IDF2.txt");
+//        docs.removeStopWord("data/stopword.txt");
+//        docs.doStemming(1);
+//        docs.setInvertedTerms(1, 1);
+//        docs.saveToFile("data/iFile2.txt");
+//        docs.calculateIDF();
+//        docs.saveToFileIDF("data/IDF2.txt");
 
-        Queries q = new Queries(d.docList);
-        q.loadInvertedFile("data/iFile2.txt");
-        q.loadRelevanceJudgement("data/ADI/qrels.text");
-        q.loadQueries("data/ADI/query.text");
+        Queries queries = new Queries(docs.docList);
+        queries.loadInvertedFile("data/iFile2.txt");
+//        queries.loadRelevanceJudgement("data/ADI/qrels.text");
+        queries.loadQueries("data/ADI/query.text");
 
-//        q.createQuery("What problems and concerns are there in making up descriptive titles? What difficulties are involved in automatically retrieving articles from approximate titles? What is the usual relevance of the content of articles to their titles?");
+//        queries.createQuery("What problems and concerns are there in making up descriptive titles? What difficulties are involved in automatically retrieving articles from approximate titles? What is the usual relevance of the content of articles to their titles?");
 
-        ArrayList<RetrievedDocument> results = q.search(1, true, true, true, "data/stopword.txt", "data/IDF2.txt");
+        ArrayList<RetrievedDocument> results = queries.search("raw", "use", "use", "use", "data/stopword.txt", "data/IDF2.txt");
 
         int idx = 0;
         // print one query
-        System.out.print(q.queryList.get(idx).no + ": " + q.queryList.get(idx).description + ", ");
+        System.out.print(queries.queryList.get(idx).no + ": " + queries.queryList.get(idx).description + ", ");
 
         // print relevance judgement related to the query above
-        if (q.queryList.get(idx).rj!= null) {
-            System.out.print(q.queryList.get(idx).rj.relevantDocs);
+        if (queries.queryList.get(idx).rj!= null) {
+            System.out.print(queries.queryList.get(idx).rj.relevantDocs);
         } else {
             System.out.print("[No Relevance Judgement found!]");
         }
@@ -49,7 +49,7 @@ public class Main {
         System.out.println("]");
         System.out.println("Avg Recall-Precision: " + result.recallPrecision[0] + "-" + result.recallPrecision[1]);
         System.out.println("NIAP: " + result.NIAP);
-        System.out.println(d.docList.size());
+        System.out.println(docs.docList.size());
 
     }
 }

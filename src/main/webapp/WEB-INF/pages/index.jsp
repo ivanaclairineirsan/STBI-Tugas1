@@ -138,17 +138,17 @@
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6" align="right">
-                            <label for="docNormalization">Normalization</label>
-                        </div>
-                        <div class="col-md-6">
-                            <form:select path="docNormalization" >
-                                <form:option value="none">No Normalization</form:option>
-                                <form:option value="use">Use Normalization</form:option>
-                            </form:select>
-                        </div>
-                    </div>
+                    <%--<div class="row">--%>
+                        <%--<div class="col-md-6" align="right">--%>
+                            <%--<label for="docNormalization">Normalization</label>--%>
+                        <%--</div>--%>
+                        <%--<div class="col-md-6">--%>
+                            <%--<form:select path="docNormalization" >--%>
+                                <%--<form:option value="none">No Normalization</form:option>--%>
+                                <%--<form:option value="use">Use Normalization</form:option>--%>
+                            <%--</form:select>--%>
+                        <%--</div>--%>
+                    <%--</div>--%>
 
                     <div class="row">
                         <div class="col-md-6" align="right">
