@@ -57,10 +57,11 @@ public class Documents {
                         while (flag == false) {
                             if (temp.substring(0, 2).equals(".A") || temp.substring(0, 2).equals(".W"))
                                 flag = true;
-                            tempTitle += temp;
-                            tempTitle += ' ';
-                            if (!flag)
+                            if (!flag) {
+                                tempTitle += temp;
+                                tempTitle += ' ';
                                 temp = filein.nextLine();
+                            }
                         }
                     }
                     //keluar dari loop, judul sudah terambil semua, isi temp sekarang adalah ".A atau .W"
