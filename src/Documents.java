@@ -32,6 +32,11 @@ public class Documents {
         return docList.get(number);
     }
 
+    public int longDocument (int no)
+    {
+        return docList.get(0).terms.size();
+    }
+
     public void loadDocuments(String docLocation) {
         docList = new ArrayList<>();
         try {
@@ -146,36 +151,26 @@ public class Documents {
     }
 
 
-
-    public ArrayList<String> makeUnique (ArrayList<String> input)
-    {
-        ArrayList<String> temp = new ArrayList<String>();
-        for(int i = 0; i < input.size(); i++)
-        {
-            if(!temp.contains(input.get(i)))
-                temp.add(input.get(i));
-        }
-        return temp;
-    }
-
     public void calculateIDF(){
-        ArrayList<String> tempTerms = new ArrayList<>();
         idfTerms = new HashMap<>();
-        ArrayList<String> temp;
+        HashMap<String, Double> mySet = new HashMap<>();
 
         for(int i = 0; i < docList.size(); i++)
         {
-            temp = (ArrayList<String>) docList.get(i).terms.keySet();
-            for(int j = 0; j < temp.size(); j++)
-                tempTerms.add(temp.get(j));
+            for(String s: docList.get(i).terms.keySet())
+            {
+                Double tempOccurence = 1.0;
+                if(mySet.containsKey(s))
+                {
+                    tempOccurence = mySet.get(s)+1.0;
+                }
+                mySet.put(s, tempOccurence);
+            }
         }
 
-        Set<String> mySet = new HashSet<>(tempTerms);
-        for(String s: mySet){
-            IDFClass tempIDF = new IDFClass(s, Collections.frequency(tempTerms, s));
-            double tempLog = Math.log10(docList.size()/tempIDF.idfNumber);
-            tempIDF.idfNumber = tempLog;
-            idfTerms.put(s, tempIDF.idfNumber);
+        for(String s: mySet.keySet()){
+            double tempLog = Math.log10(docList.size()/mySet.get(s));
+            idfTerms.put(s, tempLog);
         }
 
     }
@@ -183,19 +178,17 @@ public class Documents {
 
     public void saveToFile(String ifLocation) {
         try {
-                Map<String, Double> invertedTerms = new TreeMap<>();
-            for(Document d:docList) {
-                invertedTerms.putAll(d.terms);
-            }
-
-
+            Map<String, Double> invertedTerms;
 
             Writer output = null;
             File file = new File(ifLocation);
             output = new BufferedWriter(new FileWriter(file));
 
-            for (Map.Entry<String, Double> entry : invertedTerms.entrySet()) {
-                output.write( entry.getKey() +','+ entry.getValue().toString() + "\n");
+            for(Document d:docList) {
+                invertedTerms = new TreeMap<>(d.terms);
+                for (Map.Entry<String, Double> entry : invertedTerms.entrySet()) {
+                    output.write( entry.getKey() +','+ d.no+','+ entry.getValue().toString() + "\n");
+                }
             }
 
             output.close();
