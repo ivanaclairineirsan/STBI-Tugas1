@@ -34,6 +34,7 @@ public class Queries {
      */
     public void createQuery(String query) {
         queryList = new HashMap<>();
+        queryList.put(0, new Query(query, null));
     }
 
     /**
@@ -126,7 +127,7 @@ public class Queries {
     /**
      * find the related relevance judgement to the query
      * @param queryNo the number of the query
-     * @return the RelevanceJudgement if found, null if not
+     * @return the Relevance Judgement if found, null if not
      */
     private Set<Integer> findRelevanceJudgement(int queryNo) {
         return rjList != null ? rjList.get(queryNo) : null;
@@ -292,20 +293,6 @@ public class Queries {
     }
 
     /**
-     * the query length
-     * @return the length of the query
-     */
-    public double queryLength(Query query) {
-        Double result = 0.0;
-
-        for (Map.Entry keyValue : query.terms.entrySet()) {
-            result += Math.pow((double) keyValue.getValue(), 2);
-        }
-
-        return  result;
-    }
-
-    /**
      * Retrieve the related documents from the query
      * @param tf tf methods
      * @param idf idf methods
@@ -315,41 +302,25 @@ public class Queries {
      */
     public ArrayList<RetrievedDocument> search(int tf, int idf, int isNormalize, int stemming, String swLocation,
                                                String idfLocation) {
-        double queryWeight;
-        HashMap<String, Double> idfScore;
+        HashMap<String, Double> idfScore = loadIDF(idfLocation);
         ArrayList<RetrievedDocument> result = new ArrayList<>();
 
         for (Map.Entry<Integer, Query> aQuery : queryList.entrySet()) {
 
             Query query = aQuery.getValue();
-            System.out.println("no: " + aQuery.getKey());
-
-            queryWeight = 0;
             splitSentences(query, tf, stemming, swLocation);
 
-            for (Map.Entry<String, Double> term : query.terms.entrySet()) {
-                if (idf == 1) {
-                    idfScore = loadIDF(idfLocation);
-                    if (idfScore.containsKey(term.getKey())) {
-                        queryWeight += ((double) term.getValue()) * idfScore.get(term.getKey());
-                    } else {
-                        queryWeight += term.getValue();
-                    }
+            RetrievedDocument rd = new RetrievedDocument(aQuery.getKey(), invertedTerms, query.rj, idf, isNormalize,
+                    idfScore, documents, query.terms);
 
-                } else {
-                    queryWeight += term.getValue();
-                }
-            }
-
-            if (isNormalize == 1) {
-                queryWeight = queryWeight / queryLength(query);
-            }
-
-            result.add(new RetrievedDocument(aQuery.getKey(), invertedTerms, query.rj, documents,
-                    queryWeight, query.terms, isNormalize));
+            // void(rd)
+            result.add(rd);
         }
 
-
         return result;
+    }
+
+    void pseudoRetrieval(RetrievedDocument retrievedDocument, int N) {
+
     }
 }

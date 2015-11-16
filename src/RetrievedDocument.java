@@ -6,8 +6,6 @@ import java.util.*;
 public class RetrievedDocument {
     /* the query number */
     public int queryNo;
-    /* query weight */
-    public double queryWeight;
     /* the document */
     public Set<Document> documents;
     /* the normalization */
@@ -16,8 +14,12 @@ public class RetrievedDocument {
     public Map<String, Double> weightedTerms;
     /* the invertedFile docs */
     public Map<String, Map<Integer, Double>> invertedTerms;
+    /* setter for idf */
+    public int useIDF;
+    /* the IDF value */
+    public Map<String, Double> idfScore;
     /* the ranked document and the Recall and Precision */
-    public Map<Integer, String[]> rankedDocuments;
+    public SortedMap<Double, Set<String[]>> rankedDocuments;
     /* the size of the relevant judgement */
     public Set<Integer> relevantJudgement;
     /* the average recall-precision */
@@ -27,22 +29,20 @@ public class RetrievedDocument {
 
 
     public RetrievedDocument(int queryNo, Map<String, Map<Integer, Double>> invertedTerms, Set<Integer> relevantJudgement,
-                             Set<Document> documents, double queryWeight, Map<String, Double> weightedTerms,
-                             int normalization) {
+                             int useIDF, int normalization, Map<String, Double> idfScore, Set<Document> documents,
+                             Map<String, Double> weightedTerms) {
         this.queryNo = queryNo;
         this.invertedTerms = invertedTerms;
         this.relevantJudgement = relevantJudgement;
-        this.queryWeight = queryWeight;
+        this.useIDF = useIDF;
+        this.idfScore = idfScore;
         this.documents = documents;
         this.weightedTerms = weightedTerms;
         this.NIAP = 0;
         this.normalization = normalization;
+        this.rankedDocuments = new TreeMap<>(Collections.reverseOrder());
 
-        this.rankedDocuments = new HashMap<>();
-
-        System.out.println("computing similarity");
         computeSimilarity();
-        System.out.println("computing accuracy");
         computeAccuracy();
     }
 
@@ -50,38 +50,68 @@ public class RetrievedDocument {
      * the similarity procedure, to determine the rank of each document
       */
     public void computeSimilarity() {
-        double documentWeight = 0;
+        double queryWeight;
+        double totalWeight = 0;
         String[] temp;
         Map<Integer, Double> invTemp;
-        Map<Integer, String[]> documentElement;
+        Set<String[]> tempDoc;
 
         for (Document document : documents) {
             for (Map.Entry<String, Double> weightedTerm : weightedTerms.entrySet()) {
                 if (invertedTerms.containsKey(weightedTerm.getKey())) {
                     invTemp = invertedTerms.get(weightedTerm.getKey());
                     if (invTemp.containsKey(document.no)) {
-                        documentWeight += invTemp.get(document.no);
+                        queryWeight = weightedTerm.getValue();
+
+                        if (useIDF == 1) {
+                            queryWeight *= idfScore.get(weightedTerm.getKey());
+                        }
+                        totalWeight += queryWeight*invTemp.get(document.no);
                     }
                 }
             }
 
             if (normalization == 1) {
                 Documents d = new Documents();
-//                d.invertedTerms = new ArrayList<>()invertedTerms;
-                documentWeight = documentWeight / d.longDocument(document.no);
+//                d.invertedTerms = new ArrayList<>(invertedTerms);
+//                totalWeight = totalWeight / d.longDocument(document.no);
+                totalWeight = totalWeight / queryLength(weightedTerms);
             }
 
-            temp = new String[4];
-            temp[0] = String.valueOf(queryWeight * documentWeight);
-            temp[1] = String.valueOf(document.title);
+            temp = new String[5];
+            temp[0] = String.valueOf(document.title);
+            temp[1] = String.valueOf(document.description);
             // temp[2] for recall
             // temp[3] for precision
+            temp[4] = String.valueOf(document.no);
 
-            if (!temp[0].equals("0.0")) {
-                rankedDocuments.put(document.no, temp);
+            if (Double.compare(totalWeight, 0.0) > 0) {
+                if (!rankedDocuments.containsKey(totalWeight)) {
+                    tempDoc = new HashSet<>();
+                    tempDoc.add(temp);
+                    rankedDocuments.put(totalWeight, tempDoc);
+                } else {
+                    tempDoc = rankedDocuments.get(totalWeight);
+                    tempDoc.add(temp);
+                    rankedDocuments.put(totalWeight, tempDoc);
+                }
             }
-            documentWeight = 0;
+            totalWeight = 0;
         }
+    }
+
+    /**
+     * the query length
+     * @return the length of the query
+     */
+    public double queryLength(Map<String, Double> terms) {
+        Double result = 0.0;
+
+        for (Map.Entry keyValue : terms.entrySet()) {
+            result += Math.pow((double) keyValue.getValue(), 2);
+        }
+
+        return  result;
     }
 
     /**
@@ -103,34 +133,39 @@ public class RetrievedDocument {
         boolean addNIAP = false;
         int counter = 1;
 
-        for (Map.Entry<Integer, String[]> rankedDocument : rankedDocuments.entrySet()) {
-            if (isRelevant(rankedDocument.getKey())) {
-                numRelevantRetrieved += 1;
-                addNIAP = true;
-            }
-            temp = new Double[2];
-            if (relevantJudgement != null) {
-                // recall
-                temp[0] = (relevantJudgement.size() > 0) ? ((double) numRelevantRetrieved / relevantJudgement.size()) : 0;
-                // precision
-                temp[1] = (double) numRelevantRetrieved / counter;
-
-                if (addNIAP) {
-                    NIAP += temp[1];
-                    addNIAP = false;
+        for (Map.Entry<Double, Set<String[]>> rankedDocument : rankedDocuments.entrySet()) {
+            for (String[] docNo : rankedDocument.getValue()) {
+                if (isRelevant(Integer.valueOf(docNo[4]))) {
+                    numRelevantRetrieved += 1;
+                    addNIAP = true;
                 }
 
-            } else  {
-                temp[0] = 0.0;
-                temp[1] = 0.0;
+                temp = new Double[2];
+                if (relevantJudgement != null) {
+                    // recall
+                    temp[0] = (relevantJudgement.size() > 0) ? ((double) numRelevantRetrieved / relevantJudgement.size()) : 0;
+                    // precision
+                    temp[1] = (double) numRelevantRetrieved / counter;
+
+                    if (addNIAP) {
+                        NIAP += temp[1];
+                        addNIAP = false;
+                    }
+
+                } else  {
+                    temp[0] = 0.0;
+                    temp[1] = 0.0;
+                }
+
+                docNo[2] = String.valueOf(temp[0]);
+                docNo[3] = String.valueOf(temp[1]);
+
+                Set<String[]> tempDoc =  rankedDocument.getValue();
+                tempDoc.add(docNo);
+                rankedDocument.setValue(tempDoc);
+
+                counter++;
             }
-
-            String[] currentDocument = rankedDocument.getValue();
-            currentDocument[2] = String.valueOf(temp[0]);
-            currentDocument[3] = String.valueOf(temp[1]);
-            rankedDocument.setValue(currentDocument);
-
-            counter++;
         }
 
         computeNonInterpolatedAvgPrecision();
@@ -156,10 +191,11 @@ public class RetrievedDocument {
 
     public void printDocResult() {
         if (rankedDocuments!=null) {
-            for (Map.Entry<Integer, String[]> rankedDocument : rankedDocuments.entrySet()) {
-                System.out.print(rankedDocument.getKey() + ", similarity: ");
-                System.out.print(rankedDocument.getValue()[0] + ", title: ");
-                System.out.println(rankedDocument.getValue()[1]);
+            for (Map.Entry<Double, Set<String[]>> rankedDocument : rankedDocuments.entrySet()) {
+                for (String[] docs : rankedDocument.getValue()) {
+                    System.out.print(rankedDocument.getKey() + " - ");
+                    System.out.println(docs[0]);
+                }
             }
         }
     }
