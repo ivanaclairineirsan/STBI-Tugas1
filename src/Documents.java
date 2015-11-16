@@ -10,22 +10,22 @@ public class Documents {
 
     public ArrayList<Document> docList;
     public ArrayList<InvertedTerm> invertedTerms;
-    public ArrayList<IDFClass> idfTerms;
+    public Map<String, Double> idfTerms;
+    Set<String> stopwords;
 
     public Documents() {
     }
 
-    public int countWords(int number) {
-        return docList.get(number).terms.size();
-    }
 
     public Documents(String docLocation, int tf, int idf, int normalization, int stemming, String swLocation,
                      String ifLocation, String idfFileName) {
         loadDocuments(docLocation);
-        removeStopWord(swLocation);
-        doStemming(stemming);
-        setInvertedTerms(tf, idf, idfFileName);
+        for(int i = 0; i <docList.size(); i++) {
+            splitSentences(docList.get(i), tf, stemming, swLocation);
+        }
+        setInvertedTerms(idf);
         saveToFile(ifLocation);
+        saveToFileIDF(idfFileName);
     }
 
     public Document getDocument(int number) {
@@ -56,10 +56,12 @@ public class Documents {
                         while (flag == false) {
                             if (temp.substring(0, 2).equals(".A") || temp.substring(0, 2).equals(".W"))
                                 flag = true;
-                            tempTitle += temp;
-                            tempTitle += ' ';
-                            if (!flag)
+
+                            if (!flag){
+                                tempTitle += temp;
+                                tempTitle += ' ';
                                 temp = filein.nextLine();
+                            }
                         }
                     }
                     //keluar dari loop, judul sudah terambil semua, isi temp sekarang adalah ".A atau .W"
@@ -80,10 +82,13 @@ public class Documents {
                                 if (temp.length() > 2)
                                     if (temp.substring(0, 2).equals(".I"))
                                         flag = true;
-                                tempDescription += temp;
-                                tempDescription += ' ';
-                                if (!flag)
+
+                                if (!flag){
+                                    tempDescription += temp;
+                                    tempDescription += ' ';
                                     temp = filein.nextLine();
+
+                                }
                             }
 
                             if (!filein.hasNextLine() || temp.substring(0, 2).equals(".I")) {
@@ -101,77 +106,46 @@ public class Documents {
         }
     }
 
-    public void removeStopWord(String swLocation) {
+    public void loadStopWord(String swLocation) {
         Scanner input;
-        ArrayList<String> stopwords = new ArrayList<>();
+        stopwords = new HashSet<>();
+
         try {
             input = new Scanner(new FileReader(swLocation));
-            while (input.hasNextLine()) {
+            while (input.hasNextLine()){
                 stopwords.add(input.nextLine());
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-
-        for (int number = 0; number < docList.size(); number++) {
-            for (int i = 0; i < docList.get(number).terms.size(); i++) {
-                for (String stopword : stopwords) {
-                    if (docList.get(number).terms.get(i).equals(stopword)) {
-                        docList.get(number).terms.remove(i);
-                        i--;
-                        break;
-                    }
-                }
-            }
-        }
     }
 
-    public void doStemming(int stemming) {
+    public String doStemming(String word) {
         PorterStemmer stem;
-        if (stemming == 1) {
-            for (int number = 1; number < docList.size(); number++) {
-                for (int i = 0; i < docList.get(number).terms.size(); i++) {
-                    stem = new PorterStemmer();
-                    stem.add(docList.get(number).terms.get(i).toCharArray(), docList.get(number).terms.get(i).length());
-                    stem.stem();
-                    docList.get(number).terms.set(i, stem.toString());
-                }
-            }
-        }
+        stem = new PorterStemmer();
+        stem.add(word.toCharArray(), word.length());
+        stem.stem();
+
+        return stem.toString();
     }
 
-    public void setInvertedTerms(int tf, int idf, String idfFileName) {
-        invertedTerms = new ArrayList<>();
-        HashMap<String, Double> idfHashMap = new HashMap<>();
+    public void setInvertedTerms(int idf) {
         calculateIDF();
-        saveToFileIDF(idfFileName);
-        for (int i = 0; i < docList.size(); i++) {
-            ArrayList<String[]> termfreq;
-            termfreq = calculateTermFrequency(tf, i);
 
-
-            if(idf == 0)
-                for (int j = 0; j < termfreq.size(); j++) {
-                    invertedTerms.add(new InvertedTerm(termfreq.get(j)[0], docList.get(i).no, Double.valueOf(termfreq.get(j)[1])));
-                }
-            else if(idf == 1)
+        if(idf == 1)
+        {
+            for(Document d: docList)
             {
-                for (IDFClass idfTerm : idfTerms) {
-                    idfHashMap.put(idfTerm.term, idfTerm.idfNumber);
-                }
-                double tempTFIDF;
-                for (int j = 0; j < termfreq.size(); j++) {
-                    if (idfHashMap.containsKey(termfreq.get(j)[0])) {
-                        tempTFIDF = Double.valueOf(termfreq.get(j)[1]) * idfHashMap.get(termfreq.get(j)[0]);
-                    } else {
-                        tempTFIDF = Double.valueOf(termfreq.get(j)[1]);
-                    }
+                for(Object key : d.terms.keySet()) {
+                    Double tempIDF = idfTerms.get(key);
+                    d.terms.put(key.toString(), tempIDF*d.terms.get(key));
 
-                    invertedTerms.add(new InvertedTerm(termfreq.get(j)[0], docList.get(i).no, tempTFIDF));
                 }
             }
         }
     }
+
+
 
     public ArrayList<String> makeUnique (ArrayList<String> input)
     {
@@ -186,12 +160,12 @@ public class Documents {
 
     public void calculateIDF(){
         ArrayList<String> tempTerms = new ArrayList<>();
-        idfTerms = new ArrayList<>();
+        idfTerms = new HashMap<>();
         ArrayList<String> temp;
 
         for(int i = 0; i < docList.size(); i++)
         {
-            temp = new ArrayList<>(makeUnique(docList.get(i).terms));
+            temp = (ArrayList<String>) docList.get(i).terms.keySet();
             for(int j = 0; j < temp.size(); j++)
                 tempTerms.add(temp.get(j));
         }
@@ -201,123 +175,27 @@ public class Documents {
             IDFClass tempIDF = new IDFClass(s, Collections.frequency(tempTerms, s));
             double tempLog = Math.log10(docList.size()/tempIDF.idfNumber);
             tempIDF.idfNumber = tempLog;
-            idfTerms.add(tempIDF);
+            idfTerms.put(s, tempIDF.idfNumber);
         }
 
     }
 
-    public ArrayList<String[]> calculateTermFrequency(int tf, int number) {
-        ArrayList<String[]> termFreq = new ArrayList<String[]>(); // list of weight per word
-        String[] term; // [0]: term, [1]: frequency
-        int counter;
-        ArrayList<String> termtemps = new ArrayList<String>(docList.get(number).terms);
-        switch (tf) {
-            case 0: // none
-                while (termtemps.size() > 0) {
-                    term = new String[2];
-                    term[0] = termtemps.get(0);
-                    termtemps.remove(0);
-                    for (int i = 0; i < termtemps.size(); i++) {
-                        if (termtemps.get(i).equals(term[0])) {
-                            termtemps.remove(i);
-                            i--;
-                        }
-                    }
-                    term[1] = "1";
-                    termFreq.add(term);
-                }
-                break;
-            case 1: // raw
-                while (termtemps.size() > 0) {
-                    term = new String[2];
-                    counter = 1;
-                    term[0] = termtemps.get(0);
-                    termtemps.remove(0);
-                    for (int i = 0; i < termtemps.size(); i++) {
-                        if (termtemps.get(i).equals(term[0])) {
-                            counter++;
-                            termtemps.remove(i);
-                            i--;
-                        }
-                    }
-                    term[1] = String.valueOf(counter);
-                    termFreq.add(term);
-                }
-                break;
-            case 2: // binary
-                while (termtemps.size() > 0) {
-                    term = new String[2]; // [0]: term, [1]: frequency
-                    term[0] = termtemps.get(0);
-                    termtemps.remove(0);
-                    for (int i = 0; i < termtemps.size(); i++) {
-                        if (termtemps.get(i).equals(term[0])) {
-                            termtemps.remove(i);
-                            i--;
-                        }
-                    }
-                    term[1] = String.valueOf(1);
-                    termFreq.add(term);
-                }
-                break;
-            case 3: // augmented
-                int maxCount = -1;
-                while (termtemps.size() > 0) {
-                    term = new String[2]; // [0]: term, [1]: frequency
-                    counter = 1;
-                    term[0] = termtemps.get(0);
-                    termtemps.remove(0);
-                    for (int i = 0; i < termtemps.size(); i++) {
-                        if (termtemps.get(i).equals(term[0])) {
-                            counter++;
-                            termtemps.remove(i);
-                            i--;
-                        }
-                    }
-                    if (counter > maxCount) {
-                        maxCount = counter;
-                    }
-                    term[1] = String.valueOf(counter);
-                    termFreq.add(term);
-                }
-
-                for (int i = 0; i < termFreq.size(); i++) {
-                    String[] temp = termFreq.get(i);
-                    temp[1] = String.valueOf(0.5 + 0.5 * (Double.valueOf(temp[1]) / maxCount));
-                    termFreq.set(i, temp);
-                }
-                break;
-            case 4: // logarithmic
-                while (termtemps.size() > 0) {
-                    term = new String[2]; // [0]: term, [1]: frequency
-                    counter = 1;
-                    term[0] = termtemps.get(0);
-                    termtemps.remove(0);
-                    for (int i = 0; i < termtemps.size(); i++) {
-                        if (termtemps.get(i).equals(term[0])) {
-                            counter++;
-                            termtemps.remove(i);
-                            i--;
-                        }
-                    }
-                    term[1] = String.valueOf((double) 1 + Math.log10(counter));
-                    termFreq.add(term);
-                }
-                break;
-            default:
-                break;
-        }
-
-        return termFreq;
-    }
 
     public void saveToFile(String ifLocation) {
         try {
+                Map<String, Double> invertedTerms = new TreeMap<>();
+            for(Document d:docList) {
+                invertedTerms.putAll(d.terms);
+            }
+
+
+
             Writer output = null;
             File file = new File(ifLocation);
             output = new BufferedWriter(new FileWriter(file));
 
-            for (int i = 0; i < invertedTerms.size(); i++) {
-                output.write(invertedTerms.get(i).term + ',' + invertedTerms.get(i).documentNo + ',' + invertedTerms.get(i).weight + "\n");
+            for (Map.Entry<String, Double> entry : invertedTerms.entrySet()) {
+                output.write( entry.getKey() +','+ entry.getValue().toString() + "\n");
             }
 
             output.close();
@@ -332,11 +210,11 @@ public class Documents {
         try {
             Writer output = null;
             File file = new File(ifLocation);
+            Map<String, Double> sortedIDF = new TreeMap<String, Double>(idfTerms);
             output = new BufferedWriter(new FileWriter(file));
 
-            for (int i = 0; i < idfTerms.size(); i++) {
-                //CODE TO FETCH RESULTS AND WRITE FILE
-                output.write(idfTerms.get(i).term + ',' +idfTerms.get(i).idfNumber + "\n");
+            for (Map.Entry<String, Double> entry : sortedIDF.entrySet()) {
+                output.write( entry.getKey() +','+ entry.getValue().toString() + "\n");
             }
 
             output.close();
@@ -347,22 +225,65 @@ public class Documents {
     }
 
 
-    public double longDocument(int number){
-        double temp = 0.0;
-        double sumTemp = 0.0;
+    public void splitSentences(Document query, int TFType, int Stemming, String swLocation) {
+        Pattern p = Pattern.compile("\\w+");
+        Matcher m = p.matcher(query.description);
 
-        ArrayList<InvertedTerm> tempInverted = new ArrayList<InvertedTerm>();
-        for(int i = 0; i < invertedTerms.size(); i++)
-        {
-            if(invertedTerms.get(i).documentNo == number)
-                tempInverted.add(invertedTerms.get(i));
+        query.terms = new HashMap<>();
+        double maxFreq = 1;
+
+        while(m.find()) {
+            String key = m.group();
+
+            // apply stopword
+            loadStopWord(swLocation);
+            if (stopwords.contains(key)) {
+                key = "";
+            }
+
+            // apply stemming
+            if (Stemming == 1) {
+                key = doStemming(key);
+            }
+
+            // count the occurrences of a word
+            if (!key.equals("")) {
+                if (query.terms.containsKey(key)) {
+                    query.terms.put(key, query.terms.get(key) + 1);
+                    if (Double.compare(maxFreq, query.terms.get(key)) < 0) {
+                        maxFreq = query.terms.get(key);
+                    }
+                } else {
+                    query.terms.put(key, 1.0);
+                }
+            }
         }
 
-        for(int i = 0; i < tempInverted.size(); i++)
-        {
-            sumTemp += Math.pow(tempInverted.get(i).weight,2.0);
+        // apply TF
+        switch(TFType) {
+            case 0: // none
+                break;
+            case 1: // raw
+                break;
+            case 2: // binary
+                for (String termKey : query.terms.keySet()) {
+                    query.terms.put(termKey, 1.0);
+                }
+                break;
+            case 3: // augmented
+                for (String termKey : query.terms.keySet()) {
+                    query.terms.put(termKey, 0.5 + 0.5 * query.terms.get(termKey)/maxFreq);
+                }
+                break;
+            case 4: // logarithmic
+                for (String termKey : query.terms.keySet()) {
+                    query.terms.put(termKey, 1 + Math.log10(query.terms.get(termKey)));
+                }
+                break;
+            default:
+                break;
         }
-
-        return Math.sqrt(sumTemp);
     }
+
 }
+
