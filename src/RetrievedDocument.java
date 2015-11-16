@@ -74,7 +74,7 @@ public class RetrievedDocument {
             if (normalization == 1) {
                 Documents d = new Documents();
 //                d.invertedTerms = new ArrayList<>(invertedTerms);
-                totalWeight = totalWeight / d.longDocument(document.no);
+//                totalWeight = totalWeight / d.longDocument(document.no);
                 totalWeight = totalWeight / queryLength(weightedTerms);
             }
 

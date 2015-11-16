@@ -9,7 +9,6 @@ import java.util.regex.Pattern;
 public class Documents {
 
     public ArrayList<Document> docList;
-    public ArrayList<InvertedTerm> invertedTerms;
     public Map<String, Double> idfTerms;
     Set<String> stopwords;
 

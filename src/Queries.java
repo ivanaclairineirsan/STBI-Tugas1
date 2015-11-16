@@ -127,7 +127,7 @@ public class Queries {
     /**
      * find the related relevance judgement to the query
      * @param queryNo the number of the query
-     * @return the RelevanceJudgement if found, null if not
+     * @return the Relevance Judgement if found, null if not
      */
     private Set<Integer> findRelevanceJudgement(int queryNo) {
         return rjList != null ? rjList.get(queryNo) : null;
