@@ -292,32 +292,32 @@ public class Queries {
         }
     }
 
+    public ArrayList<RetrievedDocument> searchAll(int tf, int idf, int isNormalize, int stemming,
+                                                  String swLocation, String idfLocation) {
+        Map<String, Double> idfScore = loadIDF(idfLocation);
+        ArrayList<RetrievedDocument> result = new ArrayList<>();
+
+        for (Map.Entry<Integer, Query> aQuery : queryList.entrySet()) {
+            Query query = aQuery.getValue();
+            RetrievedDocument rd = search(aQuery.getKey(), query, tf, idf, isNormalize, stemming, idfScore, swLocation);
+            result.add(rd);
+        }
+
+        return result;
+    }
+
     /**
-     * Retrieve the related documents from the query
+     * Retrieve the related documents from a query
      * @param tf tf methods
      * @param idf idf methods
      * @param isNormalize whether want to normalize or not
      * @param swLocation stopword location
      * @return list of RetrievedDocument
      */
-    public ArrayList<RetrievedDocument> search(int tf, int idf, int isNormalize, int stemming, String swLocation,
-                                               String idfLocation) {
-        HashMap<String, Double> idfScore = loadIDF(idfLocation);
-        ArrayList<RetrievedDocument> result = new ArrayList<>();
-
-        for (Map.Entry<Integer, Query> aQuery : queryList.entrySet()) {
-
-            Query query = aQuery.getValue();
+    public RetrievedDocument search(Integer queryNo, Query query, int tf, int idf, int isNormalize, int stemming,
+                                    Map<String, Double> idfScore, String swLocation) {
             splitSentences(query, tf, stemming, swLocation);
-
-            RetrievedDocument rd = new RetrievedDocument(aQuery.getKey(), invertedTerms, query.rj, idf, isNormalize,
-                    idfScore, documents, query.terms);
-
-            // void(rd)
-            result.add(rd);
-        }
-
-        return result;
+            return new RetrievedDocument(queryNo, invertedTerms, query.rj, idf, isNormalize, idfScore, documents, query.terms);
     }
 
     void pseudoRetrieval(RetrievedDocument retrievedDocument, int N) {
