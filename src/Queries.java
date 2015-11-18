@@ -13,7 +13,7 @@ public class Queries {
     /* list of query + relevance judgement */
     public Map<Integer, Query> queryList;
     /* the docList */
-    public HashMap<Integer, Document> documents;
+    public Map<Integer, Document> documents;
 
     /* the stopword list */
     Set<String> stopwords;
@@ -234,7 +234,7 @@ public class Queries {
      */
     public void splitSentences(Query query, int TFType, int Stemming, String swLocation) {
         Pattern p = Pattern.compile("\\w+");
-        Matcher m = p.matcher(query.queryContent);
+        Matcher m = p.matcher(query.queryContent.toLowerCase());
 
         query.terms = new HashMap<>();
         double maxFreq = 1;

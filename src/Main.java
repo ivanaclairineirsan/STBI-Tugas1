@@ -13,10 +13,9 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        long time = System.currentTimeMillis();
-        Documents d = new Documents("data/CISI/cisi.all", "data/stopword.txt", "data/iFile.txt", "data/log.txt", 1, 0, 1);
+        Documents d = new Documents("data/CISI/cisi.all", "data/stopword.txt", "data/iFile.txt", "data/log.txt", 1, 1, 1);
 //        Documents d = new Documents(); d.loadDocuments("data/CISI/cisi.all");
-        System.out.println("load documents: " + (System.currentTimeMillis() - time) + " ms");
+//        System.out.println("load documents: " + (System.currentTimeMillis() - time) + " ms");
 
 //        Queries q = new Queries();
         Queries q = new Queries(d.docList);
@@ -28,10 +27,11 @@ public class Main {
 //                "What difficulties are involved in automatically retrieving articles from \n" +
 //                "approximate titles?  \n" +
 //                "What is the usual relevance of the content of articles to their titles?");
-        List<RetrievedDocument> results = q.searchAll(1,0,0,1,"data/stopword.txt","data/log.txt");
+        long time = System.currentTimeMillis();
+        List<RetrievedDocument> results = q.searchAll(1,1,0,1,"data/stopword.txt","data/log.txt");
         System.out.println("search time:" + (System.currentTimeMillis() - time) + " ms");
 
-        int idx = 14;
+        int idx = 12;
         System.out.println("Query: " + idx);
         System.out.println(idx + " -> Query : " + q.queryList.get(idx).queryContent);
         RetrievedDocument result = results.get(idx);

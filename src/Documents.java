@@ -196,7 +196,7 @@ public class Documents {
                 Map<String, Double> invertedTerms = new TreeMap<>(sortedDocuments.get(i).terms);
 
                 for (String key : invertedTerms.keySet()) {
-                    output.write(key + '\t' + i + '\t' + invertedTerms.get(key) + "\n");
+                    output.write(key.toLowerCase() + '\t' + i + '\t' + invertedTerms.get(key) + "\n");
                 }
             }
 
@@ -212,7 +212,7 @@ public class Documents {
             Writer writer = new BufferedWriter(new FileWriter(new File(ifLocation)));
 
             for (String key : sortedIdf.keySet()) {
-                writer.write(key + '\t' + sortedIdf.get(key).toString() + "\n");
+                writer.write(key.toLowerCase() + '\t' + sortedIdf.get(key).toString() + "\n");
             }
 
             writer.flush();
