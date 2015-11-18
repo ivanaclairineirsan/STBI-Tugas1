@@ -7,7 +7,7 @@ public class RetrievedDocument {
     /* the query number */
     public int queryNo;
     /* the document */
-    public Set<Document> documents;
+    public HashMap<Integer, Document> documents;
     /* the normalization */
     public int normalization;
     /* the query chunk*/
@@ -29,7 +29,7 @@ public class RetrievedDocument {
 
 
     public RetrievedDocument(int queryNo, Map<String, Map<Integer, Double>> invertedTerms, Set<Integer> relevantJudgement,
-                             int useIDF, int normalization, Map<String, Double> idfScore, Set<Document> documents,
+                             int useIDF, int normalization, Map<String, Double> idfScore, HashMap<Integer, Document> documents,
                              Map<String, Double> weightedTerms) {
         this.queryNo = queryNo;
         this.invertedTerms = invertedTerms;
@@ -56,17 +56,17 @@ public class RetrievedDocument {
         Map<Integer, Double> invTemp;
         Set<String[]> tempDoc;
 
-        for (Document document : documents) {
+        for (Integer i : documents.keySet()) {
             for (Map.Entry<String, Double> weightedTerm : weightedTerms.entrySet()) {
                 if (invertedTerms.containsKey(weightedTerm.getKey())) {
                     invTemp = invertedTerms.get(weightedTerm.getKey());
-                    if (invTemp.containsKey(document.no)) {
+                    if (invTemp.containsKey(i)) {
                         queryWeight = weightedTerm.getValue();
 
                         if (useIDF == 1) {
                             queryWeight *= idfScore.get(weightedTerm.getKey());
                         }
-                        totalWeight += queryWeight*invTemp.get(document.no);
+                        totalWeight += queryWeight*invTemp.get(i);
                     }
                 }
             }
@@ -79,11 +79,11 @@ public class RetrievedDocument {
             }
 
             temp = new String[5];
-            temp[0] = String.valueOf(document.title);
-            temp[1] = String.valueOf(document.description);
+            temp[0] = String.valueOf(documents.get(i).title);
+            temp[1] = String.valueOf(documents.get(i).description);
             // temp[2] for recall
             // temp[3] for precision
-            temp[4] = String.valueOf(document.no);
+            temp[4] = String.valueOf(i);
 
             if (Double.compare(totalWeight, 0.0) > 0) {
                 if (!rankedDocuments.containsKey(totalWeight)) {

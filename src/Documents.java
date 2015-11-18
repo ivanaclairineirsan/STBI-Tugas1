@@ -3,279 +3,232 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by christangga on 05-Oct-15.
- */
 public class Documents {
 
-    public ArrayList<Document> docList;
+    public Map<Integer, Document> docList;
     public Map<String, Double> idfTerms;
-    Set<String> stopwords;
+    Set<String> stopWords;
 
     public Documents() {
+        docList = new HashMap<>();
+        idfTerms = new HashMap<>();
+        stopWords = new HashSet<>();
     }
 
+    public Documents(String docLocation, String swLocation, String ifLocation, String idfFileName,
+                     int tf, int idf, int stemming) {
+        docList = new HashMap<>();
+        idfTerms = new HashMap<>();
+        stopWords = new HashSet<>();
 
-    public Documents(String docLocation, int tf, int idf, int normalization, int stemming, String swLocation,
-                     String ifLocation, String idfFileName) {
         loadDocuments(docLocation);
-        for(int i = 0; i <docList.size(); i++) {
-            splitSentences(docList.get(i), tf, stemming, swLocation);
+        loadStopWords(swLocation);
+
+        for (Integer i : docList.keySet()) {
+            splitSentences(docList.get(i), tf, stemming);
         }
-        setInvertedTerms(idf);
-        saveToFile(ifLocation);
-        saveToFileIDF(idfFileName);
-    }
 
-    public Document getDocument(int number) {
-        return docList.get(number);
-    }
+        calculateIDF(idf);
 
-    public int longDocument (int no)
-    {
-        return docList.get(0).terms.size();
+        saveIdfToFile(idfFileName);
+        saveTermsToFile(ifLocation);
     }
 
     public void loadDocuments(String docLocation) {
-        docList = new ArrayList<>();
         try {
-            //load document
-            File file = new File(docLocation);
-            Scanner filein = new Scanner(new FileInputStream(file));
-            String temp = filein.nextLine();
-            while (filein.hasNextLine()) {
-                //parsing di sini
-                if (temp.substring(0, 2).equals(".I")) {
-                    String tempAuthor = "";
-                    String tempTitle = "";
-                    int tempNo = 0;
-                    String tempDescription = "";
+            Scanner scanner = new Scanner(new FileInputStream(new File(docLocation)));
+            String line = scanner.nextLine();
+            while (scanner.hasNextLine()) {
+                if (line.substring(0, 2).equals(".I")) {
+                    int no = Integer.parseInt(line.substring(3, line.length()));
+                    String title = "";
+                    String author = "";
+                    String description = "";
 
-                    tempNo = Integer.parseInt(temp.substring(3, temp.length()));
-                    //ambil judul
-                    temp = filein.nextLine(); //pasti ".T"
-                    if (temp.substring(0, 2).equals(".T")) {
-                        boolean flag = false;
-                        temp = filein.nextLine(); //title baris pertama
-                        while (flag == false) {
-                            if (temp.substring(0, 2).equals(".A") || temp.substring(0, 2).equals(".W"))
-                                flag = true;
+                    line = scanner.nextLine();
+                    if (line.substring(0, 2).equals(".T")) {
+                        line = scanner.nextLine();
+                        while (!line.substring(0, 2).equals(".A") && !line.substring(0, 2).equals(".W")) {
+                            title += line;
+                            title += ' ';
 
-                            if (!flag){
-                                tempTitle += temp;
-                                tempTitle += ' ';
-                                temp = filein.nextLine();
-                            }
+                            line = scanner.nextLine();
+                        } // line.substring(0, 2).equals(".A") || line.substring(0, 2).equals(".W")
+                    }
+
+                    if (line.substring(0, 2).equals(".A")) {
+                        line = scanner.nextLine();
+                        while (!line.equals(".W")) {
+                            author += line + ';';
+                            line = scanner.nextLine();
                         }
                     }
-                    //keluar dari loop, judul sudah terambil semua, isi temp sekarang adalah ".A atau .W"
-                    if (temp.substring(0, 2).equals(".A")) {
-                        temp = filein.nextLine(); //author pertama
-                        while (!temp.equals(".W")) {
-                            tempAuthor += temp + ';';
-                            temp = filein.nextLine();
+
+                    if (line.equals(".W")) {
+                        line = scanner.nextLine();
+                        while (scanner.hasNextLine() && line.length() < 2 || !line.substring(0, 2).equals(".X") && !line.substring(0, 2).equals(".I")) {
+                            description += line;
+                            description += ' ';
+
+                            line = scanner.nextLine();
                         }
                     }
-                    //keluar dari loop, author sudah terisi, isi temp sekarang adalah ".W"
-                    if (temp.equals(".W")) {
-                        //jaga-jaga kalo ada teks kosong
-                        if (filein.hasNextLine()) {
-                            boolean flag = false;
-                            temp = filein.nextLine(); //baris pertama deskripsi dokumen
-                            while (filein.hasNextLine() && !flag) {
-                                if (temp.length() > 2)
-                                    if (temp.substring(0, 2).equals(".I"))
-                                        flag = true;
 
-                                if (!flag){
-                                    tempDescription += temp;
-                                    tempDescription += ' ';
-                                    temp = filein.nextLine();
+                    Document d = new Document(title, author, description);
+                    docList.put(no, d);
+                }
 
-                                }
-                            }
+                line = scanner.nextLine();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 
-                            if (!filein.hasNextLine() || temp.substring(0, 2).equals(".I")) {
-                                tempDescription += temp;
-                            }
+    public void loadStopWords(String swLocation) {
+        try {
+            Scanner input = new Scanner(new FileReader(swLocation));
+            while (input.hasNextLine()){
+                stopWords.add(input.nextLine());
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 
-                            Document docTemp = new Document(tempNo, tempTitle, tempAuthor, tempDescription);
-                            docList.add(docTemp); //masukkan dokumen ke dalam array
-                        }
+    public void splitSentences(Document document, int tfType, int stemType) {
+        Pattern p = Pattern.compile("\\w+");
+        Matcher m = p.matcher(document.title + document.description);
+
+        double maxTf = 1.0;
+
+        while (m.find()) {
+            String key = m.group();
+
+            // stop words removal
+            if (stopWords.contains(key)) {
+                key = "";
+            }
+
+            // stem
+            if (!key.equals("") && stemType == 1) {
+                key = stem(key);
+            }
+
+            // count the occurrences of a word
+            if (!key.equals("")) {
+                if (document.terms.containsKey(key)) {
+                    document.terms.put(key, document.terms.get(key) + 1);
+                    if (Double.compare(maxTf, document.terms.get(key)) < 0) {
+                        maxTf = document.terms.get(key);
                     }
+                } else {
+                    document.terms.put(key, 1.0);
                 }
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        }
+
+        // apply TF
+        switch(tfType) {
+            case 0: // none
+                break;
+            case 1: // raw
+                break;
+            case 2: // binary
+                for (String key : document.terms.keySet()) {
+                    document.terms.put(key, 1.0);
+                }
+                break;
+            case 3: // augmented
+                for (String key : document.terms.keySet()) {
+                    document.terms.put(key, 0.5 + 0.5 * document.terms.get(key) / maxTf);
+                }
+                break;
+            case 4: // logarithmic
+                for (String key : document.terms.keySet()) {
+                    document.terms.put(key, 1 + Math.log10(document.terms.get(key)));
+                }
+                break;
         }
     }
 
-    public void loadStopWord(String swLocation) {
-        Scanner input;
-        stopwords = new HashSet<>();
-
-        try {
-            input = new Scanner(new FileReader(swLocation));
-            while (input.hasNextLine()){
-                stopwords.add(input.nextLine());
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String doStemming(String word) {
-        PorterStemmer stem;
-        stem = new PorterStemmer();
+    public String stem(String word) {
+        PorterStemmer stem = new PorterStemmer();
         stem.add(word.toCharArray(), word.length());
         stem.stem();
 
         return stem.toString();
     }
 
-    public void setInvertedTerms(int idf) {
-        calculateIDF();
+    public void calculateIDF(int idfType){
+        HashMap<String, Double> idfList = new HashMap<>();
 
-        if(idf == 1)
-        {
-            for(Document d: docList)
-            {
-                for(Object key : d.terms.keySet()) {
-                    Double tempIDF = idfTerms.get(key);
-                    d.terms.put(key.toString(), tempIDF*d.terms.get(key));
+        for (Integer i : docList.keySet()) {
+            for (String key : docList.get(i).terms.keySet()) {
+                Double occurrence = 1.0;
+                if (idfList.containsKey(key)) {
+                    occurrence = idfList.get(key) + 1.0;
+                }
+                idfList.put(key, occurrence);
+            }
+        }
 
+        for (String key : idfList.keySet()) {
+            idfTerms.put(key, Math.log10(docList.size() / idfList.get(key)));
+        }
+
+        if (idfType == 1) {
+            for (Integer i : docList.keySet()) {
+                for (String key : docList.get(i).terms.keySet()) {
+                    Double idf = idfTerms.get(key);
+                    docList.get(i).terms.put(key, idf * docList.get(i).terms.get(key));
                 }
             }
         }
     }
 
-
-    public void calculateIDF(){
-        idfTerms = new HashMap<>();
-        HashMap<String, Double> mySet = new HashMap<>();
-
-        for(int i = 0; i < docList.size(); i++)
-        {
-            for(String s: docList.get(i).terms.keySet())
-            {
-                Double tempOccurence = 1.0;
-                if(mySet.containsKey(s))
-                {
-                    tempOccurence = mySet.get(s)+1.0;
-                }
-                mySet.put(s, tempOccurence);
-            }
-        }
-
-        for(String s: mySet.keySet()){
-            double tempLog = Math.log10(docList.size()/mySet.get(s));
-            idfTerms.put(s, tempLog);
-        }
-
-    }
-
-
-    public void saveToFile(String ifLocation) {
+    public void saveTermsToFile(String ifLocation) {
         try {
-            Map<String, Double> invertedTerms;
+            Writer output = new BufferedWriter(new FileWriter(new File(ifLocation)));
 
-            Writer output = null;
-            File file = new File(ifLocation);
-            output = new BufferedWriter(new FileWriter(file));
+            Map<Integer, Document> sortedDocuments = new TreeMap<>(docList);
+            for (Integer i : sortedDocuments.keySet()) {
+                Map<String, Double> invertedTerms = new TreeMap<>(sortedDocuments.get(i).terms);
 
-            for(Document d:docList) {
-                invertedTerms = new TreeMap<>(d.terms);
-                for (Map.Entry<String, Double> entry : invertedTerms.entrySet()) {
-                    output.write( entry.getKey() +','+ d.no+','+ entry.getValue().toString() + "\n");
+                for (String key : invertedTerms.keySet()) {
+                    output.write(key + '\t' + i + '\t' + invertedTerms.get(key) + "\n");
                 }
             }
 
             output.close();
-
         } catch (Exception e) {
             System.out.println(e.toString());
         }
     }
 
-    public void saveToFileIDF(String ifLocation) {
-
+    public void saveIdfToFile(String ifLocation) {
         try {
-            Writer output = null;
-            File file = new File(ifLocation);
-            Map<String, Double> sortedIDF = new TreeMap<String, Double>(idfTerms);
-            output = new BufferedWriter(new FileWriter(file));
+            Map<String, Double> sortedIdf = new TreeMap<>(idfTerms);
+            Writer writer = new BufferedWriter(new FileWriter(new File(ifLocation)));
 
-            for (Map.Entry<String, Double> entry : sortedIDF.entrySet()) {
-                output.write( entry.getKey() +','+ entry.getValue().toString() + "\n");
+            for (String key : sortedIdf.keySet()) {
+                writer.write(key + '\t' + sortedIdf.get(key).toString() + "\n");
             }
 
-            output.close();
-
+            writer.flush();
+            writer.close();
         } catch (Exception e) {
             System.out.println(e.toString());
         }
     }
 
-
-    public void splitSentences(Document query, int TFType, int Stemming, String swLocation) {
-        Pattern p = Pattern.compile("\\w+");
-        Matcher m = p.matcher(query.description);
-
-        query.terms = new HashMap<>();
-        double maxFreq = 1;
-
-        while(m.find()) {
-            String key = m.group();
-
-            // apply stopword
-            loadStopWord(swLocation);
-            if (stopwords.contains(key)) {
-                key = "";
-            }
-
-            // apply stemming
-            if (Stemming == 1) {
-                key = doStemming(key);
-            }
-
-            // count the occurrences of a word
-            if (!key.equals("")) {
-                if (query.terms.containsKey(key)) {
-                    query.terms.put(key, query.terms.get(key) + 1);
-                    if (Double.compare(maxFreq, query.terms.get(key)) < 0) {
-                        maxFreq = query.terms.get(key);
-                    }
-                } else {
-                    query.terms.put(key, 1.0);
-                }
-            }
-        }
-
-        // apply TF
-        switch(TFType) {
-            case 0: // none
-                break;
-            case 1: // raw
-                break;
-            case 2: // binary
-                for (String termKey : query.terms.keySet()) {
-                    query.terms.put(termKey, 1.0);
-                }
-                break;
-            case 3: // augmented
-                for (String termKey : query.terms.keySet()) {
-                    query.terms.put(termKey, 0.5 + 0.5 * query.terms.get(termKey)/maxFreq);
-                }
-                break;
-            case 4: // logarithmic
-                for (String termKey : query.terms.keySet()) {
-                    query.terms.put(termKey, 1 + Math.log10(query.terms.get(termKey)));
-                }
-                break;
-            default:
-                break;
-        }
+    public static void main(String[] args) {
+        long time = System.currentTimeMillis();
+        Documents d = new Documents("data/CISI/cisi.all", "data/stopword.txt", "data/iFile.txt", "data/log.txt", 1, 0, 1);
+//        Documents d = new Documents(); d.loadDocuments("data/CISI/cisi.all");
+        System.out.println("load documents:" + (System.currentTimeMillis() - time) + " ms");
+//        for (Integer i : d.docList.keySet()) {
+//            System.out.println(i + "\n" + d.docList.get(i).title + "\n" + d.docList.get(i).author + "\n" + d.docList.get(i).description);
+//        }
     }
-
 }
-

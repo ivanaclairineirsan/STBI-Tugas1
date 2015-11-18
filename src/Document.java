@@ -9,27 +9,15 @@ import java.util.regex.Pattern;
  */
 public class Document {
 
-    public int no;
     public String title;
     public String author;
     public String description;
     public Map<String, Double> terms;
 
-    public Document(int no, String title, String author, String description) {
-        this.no = no;
+    public Document(String title, String author, String description) {
         this.title = title;
         this.author = author;
         this.description = description;
-    }
-
-    public Document() {
-        no = 0;
-        title = "";
-        author = "";
-        description = "";
+        this.terms = new HashMap<>();
     }
 }
-
-
-
-

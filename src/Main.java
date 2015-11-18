@@ -1,8 +1,5 @@
 import java.util.List;
 
-/**
- * Kelas buat catatan aja cara pake nya -- nanti kelas ini dihapus
- */
 public class Main {
     private static String commaSeparate(Iterable<?> items) {
         StringBuilder builder = new StringBuilder();
@@ -16,16 +13,16 @@ public class Main {
     }
 
     public static void main(String[] args) {
-//        Documents d = new Documents("data/ADI/adi.all", 1, 0, 0, 1, "data/stopword.txt", "data/iFile.txt", "data/log.txt");
         long time = System.currentTimeMillis();
-        Documents d = new Documents();
-        d.loadDocuments("data/ADI/adi.all");
+        Documents d = new Documents("data/CISI/cisi.all", "data/stopword.txt", "data/iFile.txt", "data/log.txt", 1, 0, 1);
+//        Documents d = new Documents(); d.loadDocuments("data/CISI/cisi.all");
+        System.out.println("load documents: " + (System.currentTimeMillis() - time) + " ms");
 
 //        Queries q = new Queries();
         Queries q = new Queries(d.docList);
         q.loadInvertedFile("data/iFile.txt");
-        q.loadRelevanceJudgement("data/ADI/qrels.text");
-        q.loadQueries("data/ADI/query.text");
+        q.loadRelevanceJudgement("data/CISI/qrels.text");
+        q.loadQueries("data/CISI/query.text");
 //        q.createQuery("give methods for high speed publication, printing, and distribution of  scientific journals.");
 //        q.createQuery("What problems and concerns are there in making up descriptive titles?  \n" +
 //                "What difficulties are involved in automatically retrieving articles from \n" +

@@ -12,8 +12,8 @@ public class Queries {
     public Map<Integer, Set<Integer>> rjList; // relevance judgement
     /* list of query + relevance judgement */
     public Map<Integer, Query> queryList;
-    /* the documents */
-    public Set<Document> documents;
+    /* the docList */
+    public HashMap<Integer, Document> documents;
 
     /* the stopword list */
     Set<String> stopwords;
@@ -24,8 +24,8 @@ public class Queries {
 
     }
 
-    public Queries(ArrayList<Document> documents) {
-        this.documents = new HashSet<>(documents);
+    public Queries(Map<Integer, Document> documents) {
+        this.documents = new HashMap<>(documents);
     }
 
     /**
@@ -49,7 +49,7 @@ public class Queries {
         try {
             input = new Scanner(new FileReader(ifLocation));
             while (input.hasNextLine()){
-                temp = input.nextLine().split(",");
+                temp = input.nextLine().split("\t");
                 if (invertedTerms.containsKey(temp[0])) {
                     invTermTemp = invertedTerms.get(temp[0]);
                     invTermTemp.put(Integer.valueOf(temp[1]), Double.valueOf(temp[2]));
@@ -76,7 +76,7 @@ public class Queries {
         try {
             input = new Scanner(new FileReader(ifLocation));
             while (input.hasNextLine()){
-                temp = input.nextLine().split(",");
+                temp = input.nextLine().split("\t");
                 idf.put(temp[0], Double.valueOf(temp[1]));
             }
         } catch (FileNotFoundException e) {
@@ -198,8 +198,8 @@ public class Queries {
     }
 
     /**
-     * Remove the stopwords
-     * @param swLocation the stopwords location
+     * Remove the stopWords
+     * @param swLocation the stopWords location
      */
     public void loadStopWord(String swLocation) {
         Scanner input;
@@ -307,7 +307,7 @@ public class Queries {
     }
 
     /**
-     * Retrieve the related documents from a query
+     * Retrieve the related docList from a query
      * @param tf tf methods
      * @param idf idf methods
      * @param isNormalize whether want to normalize or not
