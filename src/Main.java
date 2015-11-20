@@ -31,11 +31,10 @@ public class Main {
         List<RetrievedDocument> results = q.searchAll(1,1,0,1,"data/stopword.txt","data/log.txt");
         System.out.println("search time:" + (System.currentTimeMillis() - time) + " ms");
 
-        int idx = 12;
+        int idx = 1;
         System.out.println("Query: " + idx);
         System.out.println(idx + " -> Query : " + q.queryList.get(idx).queryContent);
         RetrievedDocument result = results.get(idx);
-        result.printDocResult();
 
         System.out.println("Avg Recall : " + result.recallPrecision[0]);
         System.out.println("Precision : " + result.recallPrecision[1]);

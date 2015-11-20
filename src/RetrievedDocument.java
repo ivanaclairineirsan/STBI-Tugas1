@@ -40,7 +40,6 @@ public class RetrievedDocument {
         this.weightedTerms = weightedTerms;
         this.NIAP = 0;
         this.normalization = normalization;
-        this.rankedDocuments = new TreeMap<>(Collections.reverseOrder());
 
         computeSimilarity();
         computeAccuracy();
@@ -56,6 +55,7 @@ public class RetrievedDocument {
         Map<Integer, Double> invTemp;
         Set<String[]> tempDoc;
 
+        this.rankedDocuments = new TreeMap<>(Collections.reverseOrder());
         for (Map.Entry<Integer, Document> document : documents.entrySet()) {
             for (Map.Entry<String, Double> weightedTerm : weightedTerms.entrySet()) {
                 if (invertedTerms.containsKey(weightedTerm.getKey())) {
@@ -79,12 +79,13 @@ public class RetrievedDocument {
                 totalWeight = totalWeight / queryLength(weightedTerms);
             }
 
-            temp = new String[5];
+            temp = new String[6];
             temp[0] = String.valueOf(document.getValue().title);
             temp[1] = String.valueOf(document.getValue().description);
             // temp[2] for recall
             // temp[3] for precision
             temp[4] = String.valueOf(document.getKey());
+            temp[5] = String.valueOf(totalWeight);
 
             if (Double.compare(totalWeight, 0.0) > 0) {
                 if (!rankedDocuments.containsKey(totalWeight)) {
@@ -100,6 +101,60 @@ public class RetrievedDocument {
             totalWeight = 0;
         }
     }
+
+    public void updateQueryRoccio(int topS) {
+        double queryWeight;
+
+        int counter = 0;
+        int numRelevant = 0;
+        int numIrrelevant = 0;
+        double weightRelevant = 0;
+        double weightIrrelevant = 0;
+
+        for (Map.Entry<String, Double> term : weightedTerms.entrySet()) {
+            for (Map.Entry<Double, Set<String[]>> docs : rankedDocuments.entrySet()) {
+                for (String[] docsEl : docs.getValue()) {
+                    if (counter == topS) {
+                        break;
+                    }
+
+                    if (isRelevant(Integer.valueOf(docsEl[4]))) {
+                        if (invertedTerms.containsKey(term.getKey())) {
+                            if (invertedTerms.get(term.getKey()).containsKey(Integer.valueOf(docsEl[4]))) {
+                                weightRelevant += invertedTerms.get(term.getKey()).get(Integer.valueOf(docsEl[4]));
+                                numRelevant++;
+                            }
+                        }
+                    } else {
+//                        System.out.println("isRelevant docs: " + Integer.valueOf(docsEl[4]));
+                        if (invertedTerms.containsKey(term.getKey())) {
+                            if (invertedTerms.get(term.getKey()).containsKey(Integer.valueOf(docsEl[4]))) {
+                                weightIrrelevant += invertedTerms.get(term.getKey()).get(Integer.valueOf(docsEl[4]));
+                                numIrrelevant++;
+                            }
+                        }
+                    }
+
+                    counter++;
+                }
+            }
+
+//            System.out.println("weightRelevant: " + weightRelevant + ", numRelevant: " + numRelevant);
+//            System.out.println("weightIrrelevant: " + weightIrrelevant + ", numIrrelevant: " + numIrrelevant);
+//            System.out.print("term: " + term.getKey() + ": before: " + term.getValue());
+            queryWeight = (numRelevant > 0) ? (term.getValue() + (weightRelevant / (double) numRelevant)) : term.getValue();
+            queryWeight = (numIrrelevant> 0) ? (queryWeight - (weightIrrelevant / (double) numIrrelevant)) : queryWeight;
+            term.setValue(queryWeight);
+//            System.out.println(", after: " + term.getValue());
+
+//            rankedDocuments = new TreeMap<>(Collections.reverseOrder());
+//            computeSimilarity();
+
+        }
+
+    }
+
+
 
     /**
      * the query length
@@ -195,7 +250,8 @@ public class RetrievedDocument {
             for (Map.Entry<Double, Set<String[]>> rankedDocument : rankedDocuments.entrySet()) {
                 for (String[] docs : rankedDocument.getValue()) {
                     System.out.print(rankedDocument.getKey() + " - ");
-                    System.out.println(docs[0]);
+                    System.out.print(docs[0]);
+                    System.out.println(" (" + docs[4] + ")");
                 }
             }
         }

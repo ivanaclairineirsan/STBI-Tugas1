@@ -300,6 +300,10 @@ public class Queries {
         for (Map.Entry<Integer, Query> aQuery : queryList.entrySet()) {
             Query query = aQuery.getValue();
             RetrievedDocument rd = search(aQuery.getKey(), query, tf, idf, isNormalize, stemming, idfScore, swLocation);
+            if (aQuery.getKey() == 1) {
+                rd.updateQueryRoccio(1000);
+                rd.printDocResult();
+            }
             result.add(rd);
         }
 
