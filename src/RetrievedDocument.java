@@ -1,4 +1,3 @@
-import javax.print.Doc;
 import java.util.*;
 
 /**
@@ -38,7 +37,6 @@ public class RetrievedDocument {
         this.idfScore = idfScore;
         this.documents = documents;
         this.weightedTerms = weightedTerms;
-        this.NIAP = 0;
         this.normalization = normalization;
 
         computeSimilarity();
@@ -130,19 +128,6 @@ public class RetrievedDocument {
             }
         }
 
-        /*System.out.println("Relevant docs:");
-        for (Map.Entry<Integer, Document> docs: relevantDocs.entrySet()) {
-            System.out.print(docs.getKey() + " ");
-        }
-        *//*System.out.println();
-        System.out.println();
-        System.out.println("Irrelevant docs:");
-        for (Map.Entry<Integer, Document> docs: irrelevantDocs.entrySet()) {
-            System.out.print(docs.getKey() + " ");
-        }
-        System.out.println();*/
-
-
         for (Map.Entry<String, Double> term : weightedTerms.entrySet()) {
             for (Map.Entry<Integer, Document> doc : relevantDocs.entrySet()) {
                 if (invertedTerms.containsKey(term.getKey())) {
@@ -185,7 +170,7 @@ public class RetrievedDocument {
     public Map<String, Double> editQuery(Map<String, Double> termWeight) {
         Map<String, Double> temp = new HashMap<>();
         for (Map.Entry<String, Double> weight : termWeight.entrySet()) {
-            System.out.println("term: " + weight.getKey() + " " + weight.getValue() + " " + weightedTerms.get(weight.getKey()));
+//            System.out.println("term: " + weight.getKey() + " " + weight.getValue() + " " + weightedTerms.get(weight.getKey()));
             if (Double.compare(weight.getValue(), 0.0) > 0) {
                 temp.put(weight.getKey(), weight.getValue());
             }
@@ -221,19 +206,6 @@ public class RetrievedDocument {
                 counter++;
             }
         }
-
-        /*System.out.println("Relevant docs:");
-        for (Map.Entry<Integer, Document> docs: relevantDocs.entrySet()) {
-            System.out.print(docs.getKey() + " ");
-        }
-        *//*System.out.println();
-        System.out.println();
-        System.out.println("Irrelevant docs:");
-        for (Map.Entry<Integer, Document> docs: irrelevantDocs.entrySet()) {
-            System.out.print(docs.getKey() + " ");
-        }
-        System.out.println();*/
-
 
         for (Map.Entry<String, Double> term : weightedTerms.entrySet()) {
             for (Map.Entry<Integer, Document> doc : relevantDocs.entrySet()) {
@@ -347,6 +319,7 @@ public class RetrievedDocument {
         int numRelevantRetrieved = 0;
         boolean addNIAP = false;
         int counter = 1;
+        NIAP = 0;
 
         for (Map.Entry<Double, Set<String[]>> rankedDocument : rankedDocuments.entrySet()) {
             for (String[] docNo : rankedDocument.getValue()) {

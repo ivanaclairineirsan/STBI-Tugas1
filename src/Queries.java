@@ -293,20 +293,18 @@ public class Queries {
     }
 
     public ArrayList<RetrievedDocument> searchAll(int tf, int idf, int isNormalize, int stemming,
-                                                  String swLocation, String idfLocation, int method, int topS) {
+                                                  String swLocation, String idfLocation, int method, int topS, int isExpansion) {
         Map<String, Double> idfScore = loadIDF(idfLocation);
         ArrayList<RetrievedDocument> result = new ArrayList<>();
-        Map<String, Double> temp;
 
         for (Map.Entry<Integer, Query> aQuery : queryList.entrySet()) {
             Query query = aQuery.getValue();
             RetrievedDocument rd = search(aQuery.getKey(), query, tf, idf, isNormalize, stemming, idfScore, swLocation);
 
-            if (aQuery.getKey() == 1) {
-//                rd.updateQuery(topS, method);
+            if (isExpansion > 0) {
                 rd.updateQueryWithExpansion(topS, method);
-//                rd = new RetrievedDocument(aQuery.getKey(), invertedTerms, query.rj, idf, isNormalize, idfScore, documents, temp);
-                rd.printDocResult();
+            } else {
+                rd.updateQuery(topS, method);
             }
             result.add(rd);
         }

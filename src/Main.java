@@ -28,15 +28,14 @@ public class Main {
 //                "approximate titles?  \n" +
 //                "What is the usual relevance of the content of articles to their titles?");
         long time = System.currentTimeMillis();
-        List<RetrievedDocument> results = q.searchAll(1,0,0,1,"data/stopword.txt","data/log.txt", 1, 20);
+        List<RetrievedDocument> results = q.searchAll(1,0,0,1,"data/stopword.txt","data/log.txt", 2, 200, 0);
         System.out.println("search time:" + (System.currentTimeMillis() - time) + " ms");
 
         int idx = 1;
         System.out.println("Query: " + idx);
         System.out.println(idx + " -> Query : " + q.queryList.get(idx).queryContent);
-        RetrievedDocument result = results.get(idx);
-//        result.printDocResult();
-
+        RetrievedDocument result = results.get(idx-1);
+        result.printDocResult();
         System.out.println("Avg Recall : " + result.recallPrecision[0]);
         System.out.println("Precision : " + result.recallPrecision[1]);
         System.out.println("NIAP: " + result.NIAP);
