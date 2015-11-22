@@ -14,7 +14,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
-            Documents d = new Documents("data/cisi/CISI.all", "data/stopword.txt", "data/iFile.txt", "data/log.txt", 1, 1, 1);
+        Documents d = new Documents("data/CISI/cisi.all", "data/stopword.txt", "data/iFile.txt", "data/log.txt", 1, 0, 1);
 //        Documents d = new Documents(); d.loadDocuments("data/CISI/cisi.all");
 //        System.out.println("load documents: " + (System.currentTimeMillis() - time) + " ms");
 //        for(Map.Entry<Integer, Document> doc: d.docList.entrySet())
@@ -28,7 +28,7 @@ public class Main {
         Queries q = new Queries(d.docList);
         q.loadInvertedFile("data/iFile.txt");
         q.loadRelevanceJudgement("data/CISI/qrels.text");
-        q.loadQueries("data/CRAN/QUERYADG");
+        q.loadQueries("data/CISI/query.text");
 
         System.out.println("Size query: "+ q.queryList.size());
 
@@ -37,17 +37,18 @@ public class Main {
 //                "What difficulties are involved in automatically retrieving articles from \n" +
 //                "approximate titles?  \n" +
 //                "What is the usual relevance of the content of articles to their titles?");
-       /* long time = System.currentTimeMillis();
-        List<RetrievedDocument> results = q.searchAll(1,1,0,1,"data/stopword.txt","data/log.txt");
+        long time = System.currentTimeMillis();
+        List<RetrievedDocument> results = q.searchAll(1,0,0,1,"data/stopword.txt","data/log.txt", 1, 20);
         System.out.println("search time:" + (System.currentTimeMillis() - time) + " ms");
 
         int idx = 1;
         System.out.println("Query: " + idx);
         System.out.println(idx + " -> Query : " + q.queryList.get(idx).queryContent);
         RetrievedDocument result = results.get(idx);
+//        result.printDocResult();
 
         System.out.println("Avg Recall : " + result.recallPrecision[0]);
         System.out.println("Precision : " + result.recallPrecision[1]);
-        System.out.println("NIAP: " + result.NIAP);*/
+        System.out.println("NIAP: " + result.NIAP);
     }
 }

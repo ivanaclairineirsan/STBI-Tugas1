@@ -1,3 +1,4 @@
+import javax.print.Doc;
 import java.util.*;
 
 /**
@@ -10,7 +11,7 @@ public class RetrievedDocument {
     public Map<Integer, Document> documents;
     /* the normalization */
     public int normalization;
-    /* the query chunk*/
+    /* the query chunk */
     public Map<String, Double> weightedTerms;
     /* the invertedFile docs */
     public Map<String, Map<Integer, Double>> invertedTerms;
@@ -26,7 +27,6 @@ public class RetrievedDocument {
     public double[] recallPrecision;
     /* the non-interpolated average precision */
     public double NIAP;
-
 
     public RetrievedDocument(int queryNo, Map<String, Map<Integer, Double>> invertedTerms, Set<Integer> relevantJudgement,
                              int useIDF, int normalization, Map<String, Double> idfScore, Map<Integer, Document> documents,
@@ -102,59 +102,218 @@ public class RetrievedDocument {
         }
     }
 
-    public void updateQueryRoccio(int topS) {
-        double queryWeight;
+    public void updateQuery(int topS, int method) {
+        Map<Integer, Document> relevantDocs = new HashMap<>();
+        Map<Integer, Document> irrelevantDocs = new HashMap<>();
+        Map<String, Double> roccioWeight = new HashMap<>();
 
         int counter = 0;
-        int numRelevant = 0;
-        int numIrrelevant = 0;
+        int noDocs;
+
         double weightRelevant = 0;
         double weightIrrelevant = 0;
 
+        for (Map.Entry<Double, Set<String[]>> rankedDocument : rankedDocuments.entrySet()) {
+            for (String[] docsEl : rankedDocument.getValue()) {
+                if (counter == topS) {
+                    break;
+                }
+
+                noDocs = Integer.valueOf(docsEl[4]);
+                if (isRelevant(noDocs)) {
+                    relevantDocs.put(noDocs, documents.get(noDocs));
+                } else {
+                    irrelevantDocs.put(noDocs, documents.get(noDocs));
+                }
+
+                counter++;
+            }
+        }
+
+        /*System.out.println("Relevant docs:");
+        for (Map.Entry<Integer, Document> docs: relevantDocs.entrySet()) {
+            System.out.print(docs.getKey() + " ");
+        }
+        *//*System.out.println();
+        System.out.println();
+        System.out.println("Irrelevant docs:");
+        for (Map.Entry<Integer, Document> docs: irrelevantDocs.entrySet()) {
+            System.out.print(docs.getKey() + " ");
+        }
+        System.out.println();*/
+
+
         for (Map.Entry<String, Double> term : weightedTerms.entrySet()) {
-            for (Map.Entry<Double, Set<String[]>> docs : rankedDocuments.entrySet()) {
-                for (String[] docsEl : docs.getValue()) {
-                    if (counter == topS) {
-                        break;
+            for (Map.Entry<Integer, Document> doc : relevantDocs.entrySet()) {
+                if (invertedTerms.containsKey(term.getKey())) {
+                    if (invertedTerms.get(term.getKey()).containsKey(doc.getKey())) {
+                        weightRelevant += invertedTerms.get(term.getKey()).get(doc.getKey());
                     }
-
-                    if (isRelevant(Integer.valueOf(docsEl[4]))) {
-                        if (invertedTerms.containsKey(term.getKey())) {
-                            if (invertedTerms.get(term.getKey()).containsKey(Integer.valueOf(docsEl[4]))) {
-                                weightRelevant += invertedTerms.get(term.getKey()).get(Integer.valueOf(docsEl[4]));
-                                numRelevant++;
-                            }
-                        }
-                    } else {
-//                        System.out.println("isRelevant docs: " + Integer.valueOf(docsEl[4]));
-                        if (invertedTerms.containsKey(term.getKey())) {
-                            if (invertedTerms.get(term.getKey()).containsKey(Integer.valueOf(docsEl[4]))) {
-                                weightIrrelevant += invertedTerms.get(term.getKey()).get(Integer.valueOf(docsEl[4]));
-                                numIrrelevant++;
-                            }
-                        }
-                    }
-
-                    counter++;
                 }
             }
 
-//            System.out.println("weightRelevant: " + weightRelevant + ", numRelevant: " + numRelevant);
-//            System.out.println("weightIrrelevant: " + weightIrrelevant + ", numIrrelevant: " + numIrrelevant);
-//            System.out.print("term: " + term.getKey() + ": before: " + term.getValue());
-            queryWeight = (numRelevant > 0) ? (term.getValue() + (weightRelevant / (double) numRelevant)) : term.getValue();
-            queryWeight = (numIrrelevant> 0) ? (queryWeight - (weightIrrelevant / (double) numIrrelevant)) : queryWeight;
-            term.setValue(queryWeight);
-//            System.out.println(", after: " + term.getValue());
+            for (Map.Entry<Integer, Document> doc : irrelevantDocs.entrySet()) {
+                if (invertedTerms.containsKey(term.getKey())) {
+                    if (invertedTerms.get(term.getKey()).containsKey(doc.getKey())) {
+                        if (method == 2) { // if method = ide-dechi
+                            weightIrrelevant = invertedTerms.get(term.getKey()).get(doc.getKey());
+                            break;
+                        } else {
+                            weightIrrelevant += invertedTerms.get(term.getKey()).get(doc.getKey());
+                        }
+                    }
+                }
+            }
 
-//            rankedDocuments = new TreeMap<>(Collections.reverseOrder());
-//            computeSimilarity();
-
+            if (method == 0) { // roccio
+                roccioWeight.put(term.getKey(), term.getValue() + (weightRelevant/(double)relevantDocs.size()) - (weightIrrelevant/(double)irrelevantDocs.size()));
+            } else {
+                if (method == 1) { // ide-reguler
+                    roccioWeight.put(term.getKey(), term.getValue() + weightRelevant - weightIrrelevant);
+                } else { //dec-hi
+                    roccioWeight.put(term.getKey(), term.getValue() + weightRelevant - weightIrrelevant);
+                }
+            }
         }
 
+        roccioWeight = editQuery(roccioWeight);
+        weightedTerms = roccioWeight;
+        computeSimilarity();
+        computeAccuracy();
     }
 
+    public Map<String, Double> editQuery(Map<String, Double> termWeight) {
+        Map<String, Double> temp = new HashMap<>();
+        for (Map.Entry<String, Double> weight : termWeight.entrySet()) {
+            System.out.println("term: " + weight.getKey() + " " + weight.getValue() + " " + weightedTerms.get(weight.getKey()));
+            if (Double.compare(weight.getValue(), 0.0) > 0) {
+                temp.put(weight.getKey(), weight.getValue());
+            }
+        }
 
+        return temp;
+    }
+
+    public void updateQueryWithExpansion(int topS, int method) {
+        Map<Integer, Document> relevantDocs = new HashMap<>();
+        Map<Integer, Document> irrelevantDocs = new HashMap<>();
+        Map<String, Double> roccioWeight = new HashMap<>();
+
+        int counter = 0;
+        int noDocs;
+
+        double weightRelevant = 0;
+        double weightIrrelevant = 0;
+
+        for (Map.Entry<Double, Set<String[]>> rankedDocument : rankedDocuments.entrySet()) {
+            for (String[] docsEl : rankedDocument.getValue()) {
+                if (counter == topS) {
+                    break;
+                }
+
+                noDocs = Integer.valueOf(docsEl[4]);
+                if (isRelevant(noDocs)) {
+                    relevantDocs.put(noDocs, documents.get(noDocs));
+                } else {
+                    irrelevantDocs.put(noDocs, documents.get(noDocs));
+                }
+
+                counter++;
+            }
+        }
+
+        /*System.out.println("Relevant docs:");
+        for (Map.Entry<Integer, Document> docs: relevantDocs.entrySet()) {
+            System.out.print(docs.getKey() + " ");
+        }
+        *//*System.out.println();
+        System.out.println();
+        System.out.println("Irrelevant docs:");
+        for (Map.Entry<Integer, Document> docs: irrelevantDocs.entrySet()) {
+            System.out.print(docs.getKey() + " ");
+        }
+        System.out.println();*/
+
+
+        for (Map.Entry<String, Double> term : weightedTerms.entrySet()) {
+            for (Map.Entry<Integer, Document> doc : relevantDocs.entrySet()) {
+                if (invertedTerms.containsKey(term.getKey())) {
+                    if (invertedTerms.get(term.getKey()).containsKey(doc.getKey())) {
+                        weightRelevant += invertedTerms.get(term.getKey()).get(doc.getKey());
+                    }
+                }
+            }
+
+            for (Map.Entry<Integer, Document> doc : irrelevantDocs.entrySet()) {
+                if (invertedTerms.containsKey(term.getKey())) {
+                    if (invertedTerms.get(term.getKey()).containsKey(doc.getKey())) {
+                        if (method == 2) { // if method = ide-dechi
+                            weightIrrelevant = invertedTerms.get(term.getKey()).get(doc.getKey());
+                            break;
+                        } else {
+                            weightIrrelevant += invertedTerms.get(term.getKey()).get(doc.getKey());
+                        }
+                    }
+                }
+            }
+
+            if (method == 0) { // roccio
+                roccioWeight.put(term.getKey(), term.getValue() + (weightRelevant/(double)relevantDocs.size()) - (weightIrrelevant/(double)irrelevantDocs.size()));
+            } else {
+                if (method == 1) { // ide-reguler
+                    roccioWeight.put(term.getKey(), term.getValue() + weightRelevant - weightIrrelevant);
+                } else { //dec-hi
+                    roccioWeight.put(term.getKey(), term.getValue() + weightRelevant - weightIrrelevant);
+                }
+            }
+        }
+
+        weightRelevant = 0;
+        weightIrrelevant = 0;
+
+        for (Map.Entry<Integer, Document> doc : relevantDocs.entrySet()) {
+            for (Map.Entry<String, Double> docTerms : doc.getValue().terms.entrySet()) {
+
+                if (!roccioWeight.containsKey(docTerms.getKey())) {
+                    for (Map.Entry<Integer, Document> docRelev : relevantDocs.entrySet()) {
+                        if (invertedTerms.containsKey(docTerms.getKey())) {
+                            if (invertedTerms.get(docTerms.getKey()).containsKey(docRelev.getKey())) {
+                                if (method == 2) { // if method = ide-dechi
+                                    weightIrrelevant = invertedTerms.get(docTerms.getKey()).get(docRelev.getKey());
+                                    break;
+                                } else {
+                                    weightRelevant += invertedTerms.get(docTerms.getKey()).get(docRelev.getKey());
+                                }
+                            }
+                        }
+                    }
+
+                    for (Map.Entry<Integer, Document> docIrrelev : irrelevantDocs.entrySet()) {
+                        if (invertedTerms.containsKey(docTerms.getKey())) {
+                            if (invertedTerms.get(docTerms.getKey()).containsKey(docIrrelev.getKey())) {
+                                weightIrrelevant += invertedTerms.get(docTerms.getKey()).get(docIrrelev.getKey());
+                            }
+                        }
+                    }
+                }
+
+                if (method == 0) { // roccio
+                    roccioWeight.put(docTerms.getKey(), (weightRelevant/(double)relevantDocs.size()) - (weightIrrelevant/(double)irrelevantDocs.size()));
+                } else {
+                    if (method == 1) { // ide-reguler
+                        roccioWeight.put(docTerms.getKey(), weightRelevant - weightIrrelevant);
+                    } else { //dec-hi
+                        roccioWeight.put(docTerms.getKey(), weightRelevant - weightIrrelevant);
+                    }
+                }
+            }
+        }
+
+        roccioWeight = editQuery(roccioWeight);
+        weightedTerms = roccioWeight;
+        computeSimilarity();
+        computeAccuracy();
+    }
 
     /**
      * the query length
