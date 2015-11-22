@@ -1,4 +1,5 @@
 import java.util.List;
+import java.util.*;
 
 public class Main {
     private static String commaSeparate(Iterable<?> items) {
@@ -16,12 +17,21 @@ public class Main {
         Documents d = new Documents("data/CISI/cisi.all", "data/stopword.txt", "data/iFile.txt", "data/log.txt", 1, 0, 1);
 //        Documents d = new Documents(); d.loadDocuments("data/CISI/cisi.all");
 //        System.out.println("load documents: " + (System.currentTimeMillis() - time) + " ms");
-
+//        for(Map.Entry<Integer, Document> doc: d.docList.entrySet())
+//        {
+//            System.out.print(" " + doc.getKey());
+//        }
+        System.out.println(d.docList.size());
 //        Queries q = new Queries();
+
+
         Queries q = new Queries(d.docList);
         q.loadInvertedFile("data/iFile.txt");
         q.loadRelevanceJudgement("data/CISI/qrels.text");
         q.loadQueries("data/CISI/query.text");
+
+        System.out.println("Size query: "+ q.queryList.size());
+
 //        q.createQuery("give methods for high speed publication, printing, and distribution of  scientific journals.");
 //        q.createQuery("What problems and concerns are there in making up descriptive titles?  \n" +
 //                "What difficulties are involved in automatically retrieving articles from \n" +

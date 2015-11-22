@@ -37,48 +37,89 @@ public class Documents {
     public void loadDocuments(String docLocation) {
         try {
             Scanner scanner = new Scanner(new FileInputStream(new File(docLocation)));
-            String line = scanner.nextLine();
+            String line = scanner.nextLine().toLowerCase();
             while (scanner.hasNextLine()) {
-                if (line.substring(0, 2).equals(".I")) {
+                if (line.substring(0, 2).equalsIgnoreCase(".I")) {
                     int no = Integer.parseInt(line.substring(3, line.length()));
                     String title = "";
                     String author = "";
                     String description = "";
 
-                    line = scanner.nextLine();
-                    if (line.substring(0, 2).equals(".T")) {
-                        line = scanner.nextLine();
-                        while (!line.substring(0, 2).equals(".A") && !line.substring(0, 2).equals(".W")) {
+                    line = scanner.nextLine().toLowerCase();
+
+                    while (scanner.hasNextLine() && !line.substring(0, 2).equalsIgnoreCase(".I") && !line.substring(0, 2).equalsIgnoreCase(".T") && !line.substring(0, 2).equalsIgnoreCase(".A") && !line.substring(0, 2).equalsIgnoreCase(".W")) {
+                        line = scanner.nextLine().toLowerCase();
+                    }
+
+                    if (scanner.hasNextLine() && line.substring(0, 2).equalsIgnoreCase(".T")) {
+                        line = scanner.nextLine().toLowerCase();
+                        while (!line.substring(0, 2).equalsIgnoreCase(".A") && !line.substring(0, 2).equalsIgnoreCase(".W") && !line.substring(0, 2).equalsIgnoreCase(".B")) {
                             title += line;
                             title += ' ';
 
-                            line = scanner.nextLine();
-                        } // line.substring(0, 2).equals(".A") || line.substring(0, 2).equals(".W")
-                    }
-
-                    if (line.substring(0, 2).equals(".A")) {
-                        line = scanner.nextLine();
-                        while (!line.equals(".W")) {
-                            author += line + ';';
-                            line = scanner.nextLine();
+                            line = scanner.nextLine().toLowerCase();
                         }
                     }
 
-                    if (line.equals(".W")) {
-                        line = scanner.nextLine();
-                        while (scanner.hasNextLine() && line.length() < 2 || !line.substring(0, 2).equals(".X") && !line.substring(0, 2).equals(".I")) {
+                    while (scanner.hasNextLine() && !line.substring(0, 2).equalsIgnoreCase(".I") && !line.substring(0, 2).equalsIgnoreCase(".T") && !line.substring(0, 2).equalsIgnoreCase(".A") && !line.substring(0, 2).equalsIgnoreCase(".W")) {
+                        line = scanner.nextLine().toLowerCase();
+                    }
+
+                    if (scanner.hasNextLine() && line.substring(0, 2).equalsIgnoreCase(".W")) {
+                        line = scanner.nextLine().toLowerCase();
+                        while (scanner.hasNextLine() && line.length() < 2 || !line.substring(0, 2).equalsIgnoreCase(".B") && !line.substring(0, 2).equalsIgnoreCase(".X") && !line.substring(0, 2).equalsIgnoreCase(".I")) {
                             description += line;
                             description += ' ';
 
-                            line = scanner.nextLine();
+                            if (scanner.hasNextLine()) {
+                                line = scanner.nextLine().toLowerCase();
+                            } else {
+                                break;
+                            }
                         }
                     }
 
-                    Document d = new Document(title, author, description);
-                    docList.put(no, d);
-                }
+                    while (scanner.hasNextLine() && !line.substring(0, 2).equalsIgnoreCase(".I") && !line.substring(0, 2).equalsIgnoreCase(".T") && !line.substring(0, 2).equalsIgnoreCase(".A") && !line.substring(0, 2).equalsIgnoreCase(".W")) {
+                        line = scanner.nextLine().toLowerCase();
+                    }
 
-                line = scanner.nextLine();
+                    if (scanner.hasNextLine() && line.substring(0, 2).equalsIgnoreCase(".A")) {
+                        line = scanner.nextLine().toLowerCase();
+                        while (!line.substring(0, 2).equalsIgnoreCase(".W") && !line.substring(0, 2).equalsIgnoreCase(".B") && !line.substring(0, 2).equalsIgnoreCase(".N")) {
+                            author += line + ';';
+
+                            line = scanner.nextLine().toLowerCase();
+                        }
+                    }
+
+                    while (scanner.hasNextLine() && !line.substring(0, 2).equalsIgnoreCase(".I") && !line.substring(0, 2).equalsIgnoreCase(".T") && !line.substring(0, 2).equalsIgnoreCase(".A") && !line.substring(0, 2).equalsIgnoreCase(".W")) {
+                        line = scanner.nextLine().toLowerCase();
+                    }
+
+                    if (scanner.hasNextLine() && line.substring(0, 2).equalsIgnoreCase(".W")) {
+                        line = scanner.nextLine().toLowerCase();
+                        while (scanner.hasNextLine() && line.length() < 2 || !line.substring(0, 2).equalsIgnoreCase(".X") && !line.substring(0, 2).equalsIgnoreCase(".I")) {
+                            description += line;
+                            description += ' ';
+
+                            if (scanner.hasNextLine()) {
+                                line = scanner.nextLine().toLowerCase();
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+
+                    while (scanner.hasNextLine() && !line.substring(0, 2).equalsIgnoreCase(".I") && !line.substring(0, 2).equalsIgnoreCase(".T") && !line.substring(0, 2).equalsIgnoreCase(".A") && !line.substring(0, 2).equalsIgnoreCase(".W")) {
+                        line = scanner.nextLine().toLowerCase();
+                    }
+
+                    Document d = new Document(title, author, description);
+                    System.out.println(no);
+                    docList.put(no, d);
+                } else {
+                    line = scanner.nextLine().toLowerCase();
+                }
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -88,7 +129,7 @@ public class Documents {
     public void loadStopWords(String swLocation) {
         try {
             Scanner input = new Scanner(new FileReader(swLocation));
-            while (input.hasNextLine()){
+            while (input.hasNextLine()) {
                 stopWords.add(input.nextLine());
             }
         } catch (FileNotFoundException e) {
@@ -129,7 +170,7 @@ public class Documents {
         }
 
         // apply TF
-        switch(tfType) {
+        switch (tfType) {
             case 0: // none
                 break;
             case 1: // raw
@@ -160,7 +201,7 @@ public class Documents {
         return stem.toString();
     }
 
-    public void calculateIDF(int idfType){
+    public void calculateIDF(int idfType) {
         HashMap<String, Double> idfList = new HashMap<>();
 
         for (Integer i : docList.keySet()) {
@@ -223,12 +264,53 @@ public class Documents {
     }
 
     public static void main(String[] args) {
-        long time = System.currentTimeMillis();
-        Documents d = new Documents("data/CISI/cisi.all", "data/stopword.txt", "data/iFile.txt", "data/log.txt", 1, 0, 1);
-//        Documents d = new Documents(); d.loadDocuments("data/CISI/cisi.all");
-        System.out.println("load documents:" + (System.currentTimeMillis() - time) + " ms");
-//        for (Integer i : d.docList.keySet()) {
-//            System.out.println(i + "\n" + d.docList.get(i).title + "\n" + d.docList.get(i).author + "\n" + d.docList.get(i).description);
-//        }
+        String tc;
+
+        Scanner scanner = new Scanner(System.in);
+        int n = scanner.nextInt();
+        while (n > 0) {
+            switch (n) {
+                case 1:
+                    tc = "ADI";
+                    break;
+                case 2:
+                    tc = "CISI";
+                    break;
+                case 3:
+                    tc = "CACM";
+                    break;
+                case 4:
+                    tc = "CRAN";
+                    break;
+                case 5:
+                    tc = "MED";
+                    break;
+                case 6:
+                    tc = "NPL";
+                    break;
+                default:
+                    tc = "ADI";
+                    break;
+            }
+
+            long time = System.currentTimeMillis();
+
+//        Documents d = new Documents("data/" + tc + "/" + tc + ".all", "data/stopword.txt", "data/iFile.txt", "data/log.txt", 1, 0, 1);
+            Documents d = new Documents();
+            d.loadDocuments("data/" + tc + "/" + tc + ".all");
+
+            time = System.currentTimeMillis() - time;
+
+            for (int i = 1; i <= d.docList.size(); ++i) {
+                System.out.println(i + "\n" + d.docList.get(i).title + "\n" + d.docList.get(i).author + "\n" + d.docList.get(i).description);
+            }
+
+            System.out.println("Load: " + tc);
+            System.out.println("Total documents: " + d.docList.size());
+            System.out.println("Loaded in: " + time + " ms");
+
+            n = scanner.nextInt();
+        }
+
     }
 }
