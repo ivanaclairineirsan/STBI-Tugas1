@@ -34,7 +34,7 @@ public class Queries {
      */
     public void createQuery(String query) {
         queryList = new HashMap<>();
-        queryList.put(0, new Query(query, null));
+        queryList.put(1, new Query(query, null));
     }
 
     /**
@@ -294,7 +294,7 @@ public class Queries {
 
     public ArrayList<RetrievedDocument> searchAll(int tf, int idf, int isNormalize, int stemming,
                                                   String swLocation, String idfLocation, int method, int topS,
-                                                  int isExpansion, int isPseudo, int topN) {
+                                                  int isExpansion, int isPseudo, int topN, int useDifferentCollection) {
         Map<String, Double> idfScore = loadIDF(idfLocation);
         ArrayList<RetrievedDocument> result = new ArrayList<>();
 
@@ -303,7 +303,11 @@ public class Queries {
             RetrievedDocument rd = search(aQuery.getKey(), query, tf, idf, isNormalize, stemming, idfScore, swLocation);
 
             if (aQuery.getKey() == 1) {
-//                rd.differentCollection = 1;
+                if (useDifferentCollection > 0) {
+                    rd.differentCollection = 1;
+                } else {
+                    rd.differentCollection = 0;
+                }
                 secondRetrieval(isPseudo, topS, topN, rd, isExpansion, method);
                 rd.printRelIrel();
             }
@@ -316,10 +320,14 @@ public class Queries {
     public void secondRetrieval(int isPseudo, int topS, int topN, RetrievedDocument rd, int isExpansion, int method) {
         if (isPseudo > 0) {
             rd.topNRelevant(topS, topN);
-            rd.updateQuery(0);
+
+            if (isExpansion > 0) {
+                rd.updateQueryWithExpansion(topS, 0);
+            } else {
+                rd.updateQuery(0);
+            }
         } else {
             rd.findRelevance(topS);
-
             if (isExpansion > 0) {
                 rd.updateQueryWithExpansion(topS, method);
             } else {

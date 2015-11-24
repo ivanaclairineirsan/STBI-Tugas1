@@ -28,6 +28,7 @@ public class Main {
         q.loadInvertedFile("data/iFile.txt");
         q.loadRelevanceJudgement("data/CISI/qrels.text");
         q.loadQueries("data/CISI/query.text");
+//        q.createQuery("information");
 
 //        q.createQuery("give methods for high speed publication, printing, and distribution of  scientific journals.");
 //        q.createQuery("What problems and concerns are there in making up descriptive titles?  \n" +
@@ -35,7 +36,7 @@ public class Main {
 //                "approximate titles?  \n" +
 //                "What is the usual relevance of the content of articles to their titles?");
         long time = System.currentTimeMillis();
-        List<RetrievedDocument> results = q.searchAll(1,1,0,1,"data/stopword.txt","data/log.txt", 1, 20, 0, 1, 18);
+        List<RetrievedDocument> results = q.searchAll(1,1,0,1,"data/stopword.txt","data/log.txt", 0, 20, 0, 0, 18, 1);
         System.out.println("search time:" + (System.currentTimeMillis() - time) + " ms");
 
         int idx = 1;

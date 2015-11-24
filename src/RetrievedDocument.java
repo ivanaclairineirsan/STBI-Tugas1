@@ -72,7 +72,6 @@ public class RetrievedDocument {
                         queryWeight = weightedTerm.getValue();
 
                         if (useIDF == 1) {
-//                            System.out.println(weightedTerm.getKey());
                             queryWeight *= idfScore.get(weightedTerm.getKey());
                         }
                         totalWeight += queryWeight*invTemp.get(document.getKey());
@@ -113,12 +112,11 @@ public class RetrievedDocument {
     public void findRelevance(int topS) {
         int counter = 0;
         int noDocs;
-        /*Collection<String[]> removeCandidate = new LinkedList<>(new HashSet<String []>());
-        if (differentCollection > 0) {
-            documentsBackedUp = new TreeMap<>(rankedDocuments);
-        }*/
+        Set<String[]> temp;
+        Map<Double, Set<String[]>> tempDeleteLater = new HashMap<>();
 
         for (Map.Entry<Double, Set<String[]>> rankedDocument : rankedDocuments.entrySet()) {
+            temp = new HashSet<>();
             for (String[] docsEl : rankedDocument.getValue()) {
                 if (counter == topS) {
                     break;
@@ -132,11 +130,17 @@ public class RetrievedDocument {
                 }
 
                 counter++;
-//                removeCandidate.add(docsEl);
+                if (differentCollection > 0) {
+                    temp.add(docsEl);
+                }
             }
-            /*if (differentCollection > 0) {
-                rankedDocument.getValue().removeAll(removeCandidate);
-            }*/
+            tempDeleteLater.put(rankedDocument.getKey(), temp);
+        }
+
+        for (Map.Entry<Double, Set<String[]>> rankedDocument : tempDeleteLater.entrySet()) {
+            for (String[] docsEl : rankedDocument.getValue()) {
+                documents.remove(Integer.valueOf(docsEl[4]));
+            }
         }
 
     }
@@ -184,14 +188,10 @@ public class RetrievedDocument {
             for (Map.Entry<Integer, Document> doc : relevantDocs.entrySet()) {
                 if (invertedTerms.containsKey(term.getKey())) {
                     if (invertedTerms.get(term.getKey()).containsKey(doc.getKey())) {
-                        /*if (term.getKey().equals("titl")) {
-                            System.out.println("this: " + invertedTerms.get(term.getKey()).get(doc.getKey()));
-                        }*/
                         weightRelevant += invertedTerms.get(term.getKey()).get(doc.getKey());
                     }
                 }
             }
-//            System.out.println("total: " + weightRelevant);
 
             for (Map.Entry<Integer, Document> doc : irrelevantDocs.entrySet()) {
                 if (invertedTerms.containsKey(term.getKey())) {
@@ -212,33 +212,22 @@ public class RetrievedDocument {
                 if (method == 1) { // ide-reguler
                     roccioWeight.put(term.getKey(), term.getValue() + weightRelevant - weightIrrelevant);
                 } else { //dec-hi
-//                    System.out.println("old: " + term.getKey() + " " + term.getValue() + " " + (weightRelevant));
                     roccioWeight.put(term.getKey(), term.getValue() + weightRelevant - weightIrrelevant);
                 }
             }
         }
 
-        /*System.out.println("old query:");
-        for (Map.Entry<String, Double> term : weightedTerms.entrySet()) {
-            System.out.print(term.getKey() + " ");
-        }*/
         roccioWeight = new HashMap<>(editQuery(roccioWeight));
         weightedTerms = new HashMap<>(roccioWeight);
 
 
         computeSimilarity();
         computeAccuracy();
-        /*System.out.println("new query: ");
-        for (Map.Entry<String, Double> term : roccioWeight.entrySet()) {
-            System.out.println(term.getKey() + " " + term.getValue());
-        }*/
-//        System.out.println();
     }
 
     public Map<String, Double> editQuery(Map<String, Double> termWeight) {
         Map<String, Double> temp = new HashMap<>();
         for (Map.Entry<String, Double> weight : termWeight.entrySet()) {
-//            System.out.println("term: " + weight.getKey() + " " + weight.getValue() + " " + weightedTerms.get(weight.getKey()));
             if (Double.compare(weight.getValue(), 0.0) > 0) {
                 temp.put(weight.getKey(), weight.getValue());
             }
@@ -248,34 +237,14 @@ public class RetrievedDocument {
     }
 
     public void updateQueryWithExpansion(int topS, int method) {
-        Map<Integer, Document> relevantDocs = new HashMap<>();
-        Map<Integer, Document> irrelevantDocs = new HashMap<>();
         Map<String, Double> roccioWeight = new HashMap<>();
 
-        int counter = 0;
-        int noDocs;
-
-        double weightRelevant = 0;
-        double weightIrrelevant = 0;
-
-        for (Map.Entry<Double, Set<String[]>> rankedDocument : rankedDocuments.entrySet()) {
-            for (String[] docsEl : rankedDocument.getValue()) {
-                if (counter == topS) {
-                    break;
-                }
-
-                noDocs = Integer.valueOf(docsEl[4]);
-                if (isRelevant(noDocs)) {
-                    relevantDocs.put(noDocs, documents.get(noDocs));
-                } else {
-                    irrelevantDocs.put(noDocs, documents.get(noDocs));
-                }
-
-                counter++;
-            }
-        }
+        double weightRelevant;
+        double weightIrrelevant;
 
         for (Map.Entry<String, Double> term : weightedTerms.entrySet()) {
+            weightRelevant = 0;
+            weightIrrelevant = 0;
             for (Map.Entry<Integer, Document> doc : relevantDocs.entrySet()) {
                 if (invertedTerms.containsKey(term.getKey())) {
                     if (invertedTerms.get(term.getKey()).containsKey(doc.getKey())) {
