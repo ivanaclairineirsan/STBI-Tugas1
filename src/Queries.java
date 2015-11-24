@@ -293,7 +293,8 @@ public class Queries {
     }
 
     public ArrayList<RetrievedDocument> searchAll(int tf, int idf, int isNormalize, int stemming,
-                                                  String swLocation, String idfLocation, int method, int topS, int isExpansion) {
+                                                  String swLocation, String idfLocation, int method, int topS,
+                                                  int isExpansion, int isPseudo, int topN) {
         Map<String, Double> idfScore = loadIDF(idfLocation);
         ArrayList<RetrievedDocument> result = new ArrayList<>();
 
@@ -302,32 +303,21 @@ public class Queries {
             RetrievedDocument rd = search(aQuery.getKey(), query, tf, idf, isNormalize, stemming, idfScore, swLocation);
 
             if (aQuery.getKey() == 1) {
-                rd.findRelevance(topS, 0);
-                /*rd.addToRelevant(376);
-                rd.addToIrrelevant(65);
-                rd.addToIrrelevant(1060);
-                rd.addToIrrelevant(836);
-                rd.addToIrrelevant(263);
-                rd.addToIrrelevant(135);
-                rd.addToIrrelevant(152);
-                rd.addToIrrelevant(251);
-                rd.addToIrrelevant(873);
-                rd.addToIrrelevant(1418);
-                rd.addToIrrelevant(748);
-                rd.addToIrrelevant(1391);
-                rd.addToIrrelevant(17);
-                rd.addToIrrelevant(1428);
-                rd.addToIrrelevant(1335);
-                rd.addToIrrelevant(89);
-                rd.addToIrrelevant(442);
-                rd.addToIrrelevant(507);
-                rd.addToIrrelevant(668);
-                rd.addToIrrelevant(1180);*/
-                if (isExpansion > 0) {
-                    rd.updateQueryWithExpansion(topS, method);
+//                rd.differentCollection = 1;
+                if (isPseudo > 0) {
+                    rd.topNRelevant(topS, topN);
+                    rd.updateQuery(0);
                 } else {
-                    rd.updateQuery(method);
+                    rd.findRelevance(topS);
+
+                    if (isExpansion > 0) {
+                        rd.updateQueryWithExpansion(topS, method);
+                    } else {
+                        rd.updateQuery(method);
+                    }
                 }
+
+                rd.printRelIrel();
             }
             result.add(rd);
         }

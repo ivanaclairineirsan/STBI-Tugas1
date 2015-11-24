@@ -26,8 +26,14 @@ public class RetrievedDocument {
     public double[] recallPrecision;
     /* the non-interpolated average precision */
     public double NIAP;
+    /* relevant docs */
     Map<Integer, Document> relevantDocs;
+    /* irrelevant docs */
     Map<Integer, Document> irrelevantDocs;
+    /* use different collection */
+    public int differentCollection;
+    /* 2nd ranked documents */
+    public SortedMap<Double, Set<String[]>> documentsBackedUp;
 
     public RetrievedDocument(int queryNo, Map<String, Map<Integer, Double>> invertedTerms, Set<Integer> relevantJudgement,
                              int useIDF, int normalization, Map<String, Double> idfScore, Map<Integer, Document> documents,
@@ -104,9 +110,13 @@ public class RetrievedDocument {
         }
     }
 
-    public void findRelevance(int topS, int useOldCollection) {
+    public void findRelevance(int topS) {
         int counter = 0;
         int noDocs;
+        /*Collection<String[]> removeCandidate = new LinkedList<>(new HashSet<String []>());
+        if (differentCollection > 0) {
+            documentsBackedUp = new TreeMap<>(rankedDocuments);
+        }*/
 
         for (Map.Entry<Double, Set<String[]>> rankedDocument : rankedDocuments.entrySet()) {
             for (String[] docsEl : rankedDocument.getValue()) {
@@ -122,10 +132,35 @@ public class RetrievedDocument {
                 }
 
                 counter++;
+//                removeCandidate.add(docsEl);
             }
+            /*if (differentCollection > 0) {
+                rankedDocument.getValue().removeAll(removeCandidate);
+            }*/
         }
 
+    }
 
+    public void topNRelevant(int topS, int topN) {
+        int counter = 0;
+        int noDocs;
+
+        for (Map.Entry<Double, Set<String[]>> rankedDocument : rankedDocuments.entrySet()) {
+            for (String[] docsEl : rankedDocument.getValue()) {
+                if (counter == topS) {
+                    break;
+                }
+
+                noDocs = Integer.valueOf(docsEl[4]);
+                if (counter < topN) {
+                    addToRelevant(noDocs);
+                } else {
+                    addToIrrelevant(noDocs);
+                }
+
+                counter++;
+            }
+        }
     }
 
     public void addToRelevant(int noDoc) {
@@ -141,16 +176,6 @@ public class RetrievedDocument {
 
         double weightRelevant;
         double weightIrrelevant;
-
-        /*System.out.print("Relevan: ");
-        for(Map.Entry<Integer, Document> doc : relevantDocs.entrySet()) {
-            System.out.print(doc.getKey() + " ");
-        }
-        System.out.println();
-        System.out.print("Irrelevan: ");
-        for(Map.Entry<Integer, Document> doc : irrelevantDocs.entrySet()) {
-            System.out.print(doc.getKey() + " ");
-        }*/
 
         for (Map.Entry<String, Double> term : weightedTerms.entrySet()) {
             weightRelevant = 0;
@@ -429,6 +454,18 @@ public class RetrievedDocument {
                     System.out.println(" (" + docs[4] + ")");
                 }
             }
+        }
+    }
+
+    public void printRelIrel() {
+        System.out.print("Relevan: ");
+        for(Map.Entry<Integer, Document> doc : relevantDocs.entrySet()) {
+            System.out.print(doc.getKey() + " ");
+        }
+        System.out.println();
+        System.out.print("Irrelevan: ");
+        for(Map.Entry<Integer, Document> doc : irrelevantDocs.entrySet()) {
+            System.out.print(doc.getKey() + " ");
         }
     }
 }

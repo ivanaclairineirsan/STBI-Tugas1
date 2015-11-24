@@ -35,7 +35,7 @@ public class Main {
 //                "approximate titles?  \n" +
 //                "What is the usual relevance of the content of articles to their titles?");
         long time = System.currentTimeMillis();
-        List<RetrievedDocument> results = q.searchAll(1,1,0,1,"data/stopword.txt","data/log.txt", 0, 20, 0);
+        List<RetrievedDocument> results = q.searchAll(1,1,0,1,"data/stopword.txt","data/log.txt", 1, 20, 0, 1, 18);
         System.out.println("search time:" + (System.currentTimeMillis() - time) + " ms");
 
         int idx = 1;
