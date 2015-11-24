@@ -304,25 +304,28 @@ public class Queries {
 
             if (aQuery.getKey() == 1) {
 //                rd.differentCollection = 1;
-                if (isPseudo > 0) {
-                    rd.topNRelevant(topS, topN);
-                    rd.updateQuery(0);
-                } else {
-                    rd.findRelevance(topS);
-
-                    if (isExpansion > 0) {
-                        rd.updateQueryWithExpansion(topS, method);
-                    } else {
-                        rd.updateQuery(method);
-                    }
-                }
-
+                secondRetrieval(isPseudo, topS, topN, rd, isExpansion, method);
                 rd.printRelIrel();
             }
             result.add(rd);
         }
 
         return result;
+    }
+
+    public void secondRetrieval(int isPseudo, int topS, int topN, RetrievedDocument rd, int isExpansion, int method) {
+        if (isPseudo > 0) {
+            rd.topNRelevant(topS, topN);
+            rd.updateQuery(0);
+        } else {
+            rd.findRelevance(topS);
+
+            if (isExpansion > 0) {
+                rd.updateQueryWithExpansion(topS, method);
+            } else {
+                rd.updateQuery(method);
+            }
+        }
     }
 
     /**
