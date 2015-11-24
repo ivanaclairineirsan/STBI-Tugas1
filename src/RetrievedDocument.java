@@ -26,6 +26,8 @@ public class RetrievedDocument {
     public double[] recallPrecision;
     /* the non-interpolated average precision */
     public double NIAP;
+    Map<Integer, Document> relevantDocs;
+    Map<Integer, Document> irrelevantDocs;
 
     public RetrievedDocument(int queryNo, Map<String, Map<Integer, Double>> invertedTerms, Set<Integer> relevantJudgement,
                              int useIDF, int normalization, Map<String, Double> idfScore, Map<Integer, Document> documents,
@@ -38,6 +40,8 @@ public class RetrievedDocument {
         this.documents = documents;
         this.weightedTerms = weightedTerms;
         this.normalization = normalization;
+        relevantDocs = new HashMap<>();
+        irrelevantDocs = new HashMap<>();
 
         computeSimilarity();
         computeAccuracy();
@@ -100,16 +104,9 @@ public class RetrievedDocument {
         }
     }
 
-    public void updateQuery(int topS, int method) {
-        Map<Integer, Document> relevantDocs = new HashMap<>();
-        Map<Integer, Document> irrelevantDocs = new HashMap<>();
-        Map<String, Double> roccioWeight = new HashMap<>();
-
+    public void findRelevance(int topS, int useOldCollection) {
         int counter = 0;
         int noDocs;
-
-        double weightRelevant = 0;
-        double weightIrrelevant = 0;
 
         for (Map.Entry<Double, Set<String[]>> rankedDocument : rankedDocuments.entrySet()) {
             for (String[] docsEl : rankedDocument.getValue()) {
@@ -128,14 +125,48 @@ public class RetrievedDocument {
             }
         }
 
+        
+    }
+
+    public void addToRelevant(int noDoc) {
+        relevantDocs.put(noDoc, documents.get(noDoc));
+    }
+
+    public void addToIrrelevant(int noDoc) {
+        irrelevantDocs.put(noDoc, documents.get(noDoc));
+    }
+
+    public void updateQuery(int method) {
+        Map<String, Double> roccioWeight = new HashMap<>();
+
+        double weightRelevant;
+        double weightIrrelevant;
+
+        /*System.out.print("Relevan: ");
+        for(Map.Entry<Integer, Document> doc : relevantDocs.entrySet()) {
+            System.out.print(doc.getKey() + " ");
+        }
+        System.out.println();
+        System.out.print("Irrelevan: ");
+        for(Map.Entry<Integer, Document> doc : irrelevantDocs.entrySet()) {
+            System.out.print(doc.getKey() + " ");
+        }*/
+
         for (Map.Entry<String, Double> term : weightedTerms.entrySet()) {
+            weightRelevant = 0;
+            weightIrrelevant = 0;
+
             for (Map.Entry<Integer, Document> doc : relevantDocs.entrySet()) {
                 if (invertedTerms.containsKey(term.getKey())) {
                     if (invertedTerms.get(term.getKey()).containsKey(doc.getKey())) {
+                        /*if (term.getKey().equals("titl")) {
+                            System.out.println("this: " + invertedTerms.get(term.getKey()).get(doc.getKey()));
+                        }*/
                         weightRelevant += invertedTerms.get(term.getKey()).get(doc.getKey());
                     }
                 }
             }
+//            System.out.println("total: " + weightRelevant);
 
             for (Map.Entry<Integer, Document> doc : irrelevantDocs.entrySet()) {
                 if (invertedTerms.containsKey(term.getKey())) {
@@ -156,15 +187,27 @@ public class RetrievedDocument {
                 if (method == 1) { // ide-reguler
                     roccioWeight.put(term.getKey(), term.getValue() + weightRelevant - weightIrrelevant);
                 } else { //dec-hi
+//                    System.out.println("old: " + term.getKey() + " " + term.getValue() + " " + (weightRelevant));
                     roccioWeight.put(term.getKey(), term.getValue() + weightRelevant - weightIrrelevant);
                 }
             }
         }
 
-        roccioWeight = editQuery(roccioWeight);
-        weightedTerms = roccioWeight;
+        /*System.out.println("old query:");
+        for (Map.Entry<String, Double> term : weightedTerms.entrySet()) {
+            System.out.print(term.getKey() + " ");
+        }*/
+        roccioWeight = new HashMap<>(editQuery(roccioWeight));
+        weightedTerms = new HashMap<>(roccioWeight);
+
+
         computeSimilarity();
         computeAccuracy();
+        /*System.out.println("new query: ");
+        for (Map.Entry<String, Double> term : roccioWeight.entrySet()) {
+            System.out.println(term.getKey() + " " + term.getValue());
+        }*/
+//        System.out.println();
     }
 
     public Map<String, Double> editQuery(Map<String, Double> termWeight) {

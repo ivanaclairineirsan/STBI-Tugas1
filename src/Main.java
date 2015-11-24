@@ -14,14 +14,13 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Documents d = new Documents("data/CISI/cisi.all", "data/stopword.txt", "data/iFile.txt", "data/log.txt", 1, 0, 1);
+        Documents d = new Documents("data/CISI/cisi.all", "data/stopword.txt", "data/iFile.txt", "data/log.txt", 1, 1, 1);
 //        Documents d = new Documents(); d.loadDocuments("data/CISI/cisi.all");
 //        System.out.println("load documents: " + (System.currentTimeMillis() - time) + " ms");
 //        for(Map.Entry<Integer, Document> doc: d.docList.entrySet())
 //        {
 //            System.out.print(" " + doc.getKey());
 //        }
-        System.out.println(d.docList.size());
 //        Queries q = new Queries();
 
 
@@ -30,15 +29,13 @@ public class Main {
         q.loadRelevanceJudgement("data/CISI/qrels.text");
         q.loadQueries("data/CISI/query.text");
 
-        System.out.println("Size query: "+ q.queryList.size());
-
 //        q.createQuery("give methods for high speed publication, printing, and distribution of  scientific journals.");
 //        q.createQuery("What problems and concerns are there in making up descriptive titles?  \n" +
 //                "What difficulties are involved in automatically retrieving articles from \n" +
 //                "approximate titles?  \n" +
 //                "What is the usual relevance of the content of articles to their titles?");
         long time = System.currentTimeMillis();
-        List<RetrievedDocument> results = q.searchAll(1,0,0,1,"data/stopword.txt","data/log.txt", 2, 200, 0);
+        List<RetrievedDocument> results = q.searchAll(1,1,0,1,"data/stopword.txt","data/log.txt", 0, 20, 0);
         System.out.println("search time:" + (System.currentTimeMillis() - time) + " ms");
 
         int idx = 1;

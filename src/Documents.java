@@ -115,7 +115,6 @@ public class Documents {
                     }
 
                     Document d = new Document(title, author, description);
-                    System.out.println(no);
                     docList.put(no, d);
                 } else {
                     line = scanner.nextLine().toLowerCase();

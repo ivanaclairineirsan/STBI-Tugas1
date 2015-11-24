@@ -301,10 +301,33 @@ public class Queries {
             Query query = aQuery.getValue();
             RetrievedDocument rd = search(aQuery.getKey(), query, tf, idf, isNormalize, stemming, idfScore, swLocation);
 
-            if (isExpansion > 0) {
-                rd.updateQueryWithExpansion(topS, method);
-            } else {
-                rd.updateQuery(topS, method);
+            if (aQuery.getKey() == 1) {
+                rd.findRelevance(topS, 0);
+                /*rd.addToRelevant(376);
+                rd.addToIrrelevant(65);
+                rd.addToIrrelevant(1060);
+                rd.addToIrrelevant(836);
+                rd.addToIrrelevant(263);
+                rd.addToIrrelevant(135);
+                rd.addToIrrelevant(152);
+                rd.addToIrrelevant(251);
+                rd.addToIrrelevant(873);
+                rd.addToIrrelevant(1418);
+                rd.addToIrrelevant(748);
+                rd.addToIrrelevant(1391);
+                rd.addToIrrelevant(17);
+                rd.addToIrrelevant(1428);
+                rd.addToIrrelevant(1335);
+                rd.addToIrrelevant(89);
+                rd.addToIrrelevant(442);
+                rd.addToIrrelevant(507);
+                rd.addToIrrelevant(668);
+                rd.addToIrrelevant(1180);*/
+                if (isExpansion > 0) {
+                    rd.updateQueryWithExpansion(topS, method);
+                } else {
+                    rd.updateQuery(method);
+                }
             }
             result.add(rd);
         }
