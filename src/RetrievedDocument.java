@@ -125,7 +125,7 @@ public class RetrievedDocument {
             }
         }
 
-        
+
     }
 
     public void addToRelevant(int noDoc) {

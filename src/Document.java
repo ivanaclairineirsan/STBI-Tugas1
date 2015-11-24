@@ -20,4 +20,15 @@ public class Document {
         this.description = description;
         this.terms = new HashMap<>();
     }
+
+    public double documentLength(){
+            double result = 0.0;
+            for (Map.Entry keyValue : terms.entrySet()) {
+                result += Math.pow((double) keyValue.getValue(), 2);
+            }
+            return  result;
+    }
 }
+
+
+
