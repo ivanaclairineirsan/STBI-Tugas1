@@ -79,10 +79,8 @@ public class RetrievedDocument {
                 }
             }
 
-            if (normalization == 1) {
-                Documents d = new Documents();
-//                d.invertedTerms = new ArrayList<>(invertedTerms);
-//                totalWeight = totalWeight / d.longDocument(document.no);
+            if (normalization > 0) {
+                totalWeight = totalWeight / document.getValue().documentLength();
                 totalWeight = totalWeight / queryLength(weightedTerms);
             }
 
@@ -112,11 +110,9 @@ public class RetrievedDocument {
     public void findRelevance(int topS) {
         int counter = 0;
         int noDocs;
-        Set<String[]> temp;
-        Map<Double, Set<String[]>> tempDeleteLater = new HashMap<>();
+        Set<String[]> temp = new HashSet<>();
 
         for (Map.Entry<Double, Set<String[]>> rankedDocument : rankedDocuments.entrySet()) {
-            temp = new HashSet<>();
             for (String[] docsEl : rankedDocument.getValue()) {
                 if (counter == topS) {
                     break;
@@ -134,13 +130,11 @@ public class RetrievedDocument {
                     temp.add(docsEl);
                 }
             }
-            tempDeleteLater.put(rankedDocument.getKey(), temp);
         }
 
-        for (Map.Entry<Double, Set<String[]>> rankedDocument : tempDeleteLater.entrySet()) {
-            for (String[] docsEl : rankedDocument.getValue()) {
-                documents.remove(Integer.valueOf(docsEl[4]));
-            }
+        // delete element if exist
+        for (String[] docsEl : temp) {
+            documents.remove(Integer.valueOf(docsEl[4]));
         }
 
     }
