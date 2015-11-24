@@ -1,31 +1,33 @@
 package com.researchengine.model;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.io.IOException;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by christangga on 05-Oct-15.
- */
 public class Queries {
     /* list of relevance judgement */
-    public ArrayList<RelevanceJudgement> rjList; // relevance judgement
+    public Map<Integer, Set<Integer>> rjList; // relevance judgement
     /* list of query + relevance judgement */
-    public ArrayList<Query> queryList;
-    /* the documents */
-    public ArrayList<Document> documents;
+    public Map<Integer, Query> queryList;
+    /* the docList */
+    public Map<Integer, Document> documents;
 
-    /* terms per query */
-    private ArrayList<String> terms;
+    /* the stopword list */
+    Set<String> stopwords;
     /* inverted terms */
-    private ArrayList<InvertedTerm> invertedTerms;
+    private Map<String, Map<Integer, Double>> invertedTerms;
 
-    public Queries(ArrayList<Document> documents) {
-        this.documents = documents;
+    public Queries() {
+
+    }
+
+    public Queries(Map<Integer, Document> documents) {
+        this.documents = new HashMap<>(documents);
     }
 
     /**
@@ -33,8 +35,8 @@ public class Queries {
      * @param query the query
      */
     public void createQuery(String query) {
-        queryList = new ArrayList<>();
-        queryList.add(new Query(0, query, null));
+        queryList = new HashMap<>();
+        queryList.put(1, new Query(query, null));
     }
 
     /**
@@ -44,14 +46,21 @@ public class Queries {
     public void loadInvertedFile(String ifLocation) {
         Scanner input;
         String[] temp;
-        InvertedTerm term;
-        invertedTerms = new ArrayList<>();
+        invertedTerms = new HashMap<>();
+        Map<Integer, Double> invTermTemp;
         try {
             input = new Scanner(new FileReader(ifLocation));
             while (input.hasNextLine()){
-                temp = input.nextLine().split(",");
-                term = new InvertedTerm(temp[0],Integer.valueOf(temp[1]),Double.valueOf(temp[2]));
-                invertedTerms.add(term);
+                temp = input.nextLine().split("\t");
+                if (invertedTerms.containsKey(temp[0])) {
+                    invTermTemp = invertedTerms.get(temp[0]);
+                    invTermTemp.put(Integer.valueOf(temp[1]), Double.valueOf(temp[2]));
+                    invertedTerms.put(temp[0], invTermTemp);
+                } else {
+                    invTermTemp = new HashMap<>();
+                    invTermTemp.put(Integer.valueOf(temp[1]), Double.valueOf(temp[2]));
+                    invertedTerms.put(temp[0], invTermTemp);
+                }
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -69,7 +78,7 @@ public class Queries {
         try {
             input = new Scanner(new FileReader(ifLocation));
             while (input.hasNextLine()){
-                temp = input.nextLine().split(",");
+                temp = input.nextLine().split("\t");
                 idf.put(temp[0], Double.valueOf(temp[1]));
             }
         } catch (FileNotFoundException e) {
@@ -81,40 +90,38 @@ public class Queries {
 
     /**
      * load relevance judgement to the rjList
-     * @param rjLocation the location of the relevance judgement
+     * @param rjFile the location of the relevance judgement
      */
-    public void loadRelevanceJudgement(String rjLocation) {
-        rjList = new ArrayList<>();
-        RelevanceJudgement relJudge = null;
-        rjList.add(new RelevanceJudgement(-1,null));
-
+    public void loadRelevanceJudgement(MultipartFile rjFile) {
         Scanner input;
         String[] temp;
+        Set<Integer> docTemp;
+        rjList = new HashMap<>();
+
         try {
-            input = new Scanner(new FileReader(rjLocation));
+            input = new Scanner(rjFile.getInputStream());
+            // first line
+            temp = input.nextLine().split("\\s+");
+            docTemp = new HashSet<>();
+            docTemp.add(Integer.valueOf(temp[1]));
+            rjList.put(Integer.valueOf(temp[0]), docTemp);
+
+            // iterate to the rest
             while (input.hasNextLine()){
                 temp = input.nextLine().split("\\s+");
-                if (relJudge == null) {
-                    relJudge = new RelevanceJudgement(Integer.valueOf(temp[0]),Integer.valueOf(temp[1]));
-                    if (!input.hasNextLine()) { // if the file contains 1 relevant judgement
-                        rjList.add(relJudge);
-                    }
+
+                // check for the existence of the key
+                if (rjList.containsKey(Integer.valueOf(temp[0]))) {
+                    docTemp = new HashSet<>(rjList.get(Integer.valueOf(temp[0])));
+                    docTemp.add(Integer.valueOf(temp[1]));
+                    rjList.put(Integer.valueOf(temp[0]), docTemp);
                 } else {
-                    if (relJudge.no == Integer.valueOf(temp[0])) {
-                        relJudge.add(Integer.valueOf(temp[1]));
-                        if (!input.hasNextLine()) { // the last relevant judgement in the file
-                            rjList.add(relJudge);
-                        }
-                    } else {
-                        rjList.add(relJudge);
-                        relJudge = new RelevanceJudgement(Integer.valueOf(temp[0]),Integer.valueOf(temp[1]));
-                        if (!input.hasNextLine()) { // new query and the last relevant judgement in the file
-                            rjList.add(relJudge);
-                        }
-                    }
+                    docTemp = new HashSet<>();
+                    docTemp.add(Integer.valueOf(temp[1]));
+                    rjList.put(Integer.valueOf(temp[0]), docTemp);
                 }
             }
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -122,25 +129,18 @@ public class Queries {
     /**
      * find the related relevance judgement to the query
      * @param queryNo the number of the query
-     * @return the RelevanceJudgement if found, null if not
+     * @return the Relevance Judgement if found, null if not
      */
-    private RelevanceJudgement findRelevanceJudgement(int queryNo) {
-        for (RelevanceJudgement aRjList : rjList) {
-            if (aRjList.no == queryNo) {
-                return aRjList;
-            }
-        }
-
-        return null;
+    private Set<Integer> findRelevanceJudgement(int queryNo) {
+        return rjList != null ? rjList.get(queryNo) : null;
     }
 
     /**
      * load query to the queryList
-     * @param querylocation the location of the query
+     * @param queryFile the location of the query
      */
-    public void loadQueries(String querylocation) {
-        queryList = new ArrayList<>();
-        Query query;
+    public void loadQueries(MultipartFile queryFile) {
+        queryList = new HashMap<>();
         boolean contentMode = false, initialize = false;
 
         Scanner input;
@@ -148,20 +148,18 @@ public class Queries {
         int queryNo = 0;
         StringBuffer queryContent = new StringBuffer("");
         try {
-            input = new Scanner(new FileReader(querylocation));
+            input = new Scanner(queryFile.getInputStream());
+
             while (input.hasNextLine()){
                 String line = input.nextLine();
-                if (line.length() > 2) {
-                    if (line.substring(0,2).equals(".I")) {
-                        if (!queryContent.toString().equals("")) {
-                            query = new Query(queryNo, queryContent.toString(), findRelevanceJudgement(queryNo));
-                            queryList.add(query);
-                        }
-                        initialize = false;
-                        contentMode = false;
-                        temp = line.split(" ");
-                        queryNo = Integer.valueOf(temp[1]);
+                if (line.contains(".I ")) {
+                    if (!queryContent.toString().equals("")) {
+                        queryList.put(queryNo, new Query(queryContent.toString(), findRelevanceJudgement(queryNo)));
                     }
+                    initialize = false;
+                    contentMode = false;
+                    temp = line.split(" ");
+                    queryNo = Integer.valueOf(temp[1]);
                 }
                 if (line.equals(".T")) {
                     if (!initialize) {
@@ -192,247 +190,160 @@ public class Queries {
                 }
 
                 if (!input.hasNextLine()) {
-                    query = new Query(queryNo, queryContent.toString(), findRelevanceJudgement(queryNo));
-                    queryList.add(query);
+                    queryList.put(queryNo, new Query(queryContent.toString(), findRelevanceJudgement(queryNo)));
                 }
 
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     /**
-     * Tokenize the sentence into the chunk of words
-     * @param sentence the sentence to tokenize
+     * Remove the stopWords
+     * @param swFile the stopWords location
      */
-    public void splitSentences(String sentence) {
-        sentence = sentence.toLowerCase();
-        Pattern p = Pattern.compile("\\w+");
-        Matcher m = p.matcher(sentence);
-
-        terms=new ArrayList<>();
-        while(m.find()) {
-            terms.add(m.group());
-        }
-    }
-
-    /**
-     * Remove the stopwords
-     * @param swLocation the stopwords location
-     */
-    public void removeStopWord(String swLocation) {
+    public void loadStopWord(MultipartFile swFile) {
         Scanner input;
-        ArrayList<String> stopwords = new ArrayList<>();
+        stopwords = new HashSet<>();
+
         try {
-            input = new Scanner(new FileReader(swLocation));
+            input = new Scanner(swFile.getInputStream());
             while (input.hasNextLine()){
                 stopwords.add(input.nextLine());
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        }
-
-        for (int i = 0; i < terms.size(); i++) {
-            for (String stopword : stopwords) {
-                if (terms.get(i).equals(stopword)) {
-                    terms.remove(i);
-                    i--;
-                    break;
-                }
-            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     /**
      * stem the word
-     * @param stemming true if want to stem the word
+     * @param word the word to be stem
      */
-    public void doStemming(boolean stemming) {
+    public String doStemming(String word) {
         PorterStemmer stem;
-        if (stemming) {
-            for (int i = 0; i < terms.size(); i++) {
-                stem = new PorterStemmer();
-                stem.add(terms.get(i).toCharArray(),terms.get(i).length());
-                stem.stem();
-                terms.set(i, stem.toString());
-            }
-        }
+        stem = new PorterStemmer();
+        stem.add(word.toCharArray(), word.length());
+        stem.stem();
+
+        return stem.toString();
     }
 
     /**
-     * Calculate the tf, idf, and normalization of each words of the query
-     * @param tf select the tf method (0: no-TF, 1: raw-TF, 2: binary-TF, 3: augmented-TF, 4: logarithmic-TF
-     * @return list of the terms and the weights related to the used method
+     * Tokenize the sentence into the chunk of words
+     * @param query the content of the query to tokenize
      */
-    public ArrayList<String[]> calculateTermFrequency(String tf) {
-        ArrayList<String[]> termFreq = new ArrayList<>(); // list of weight per word
-        String[] term; // [0]: term, [1]: frequency
-        int counter;
+    public void splitSentences(Query query, int TFType, int Stemming, MultipartFile swFile) {
+        Pattern p = Pattern.compile("\\w+");
+        Matcher m = p.matcher(query.queryContent.toLowerCase());
 
-        switch(tf) {
-            case "none": // none
-                while(terms.size() > 0) {
-                    term = new String[2];
-                    term[0] = terms.get(0);
-                    terms.remove(0);
-                    for (int i = 0; i < terms.size(); i++) {
-                        if (terms.get(i).equals(term[0])) {
-                            terms.remove(i);
-                            i--;
-                        }
-                    }
-                    term[1] = "1";
-                    termFreq.add(term);
-                }
-                break;
-            case "raw": // raw
-                while(terms.size() > 0) {
-                    term = new String[2];
-                    counter = 1;
-                    term[0] = terms.get(0);
-                    terms.remove(0);
-                    for (int i = 0; i < terms.size(); i++) {
-                        if (terms.get(i).equals(term[0])) {
-                            counter++;
-                            terms.remove(i);
-                            i--;
-                        }
-                    }
-                    term[1] = String.valueOf(counter);
-                    termFreq.add(term);
-                }
-                break;
-            case "binary": // binary
-                while(terms.size() > 0) {
-                    term = new String[2]; // [0]: term, [1]: frequency
-                    term[0] = terms.get(0);
-                    terms.remove(0);
-                    for (int i = 0; i < terms.size(); i++) {
-                        if (terms.get(i).equals(term[0])) {
-                            terms.remove(i);
-                            i--;
-                        }
-                    }
-                    term[1] = String.valueOf(1);
-                    termFreq.add(term);
-                }
-                break;
-            case "augmented": // augmented
-                int maxCount = -1;
-                while(terms.size() > 0) {
-                    term = new String[2]; // [0]: term, [1]: frequency
-                    counter = 1;
-                    term[0] = terms.get(0);
-                    terms.remove(0);
-                    for (int i = 0; i < terms.size(); i++) {
-                        if (terms.get(i).equals(term[0])) {
-                            counter++;
-                            terms.remove(i);
-                            i--;
-                        }
-                    }
-                    if (counter > maxCount) {
-                        maxCount = counter;
-                    }
-                    term[1] = String.valueOf(counter);
-                    termFreq.add(term);
-                }
+        query.terms = new HashMap<>();
+        double maxFreq = 1;
 
-                for (int i = 0; i < termFreq.size(); i++) {
-                    String[] temp = termFreq.get(i);
-                    temp[1] = String.valueOf(0.5 + 0.5 * (Double.valueOf(temp[1])/maxCount));
-                    termFreq.set(i,temp);
+        while(m.find()) {
+            String key = m.group();
+
+            // apply stopword
+            loadStopWord(swFile);
+            if (stopwords.contains(key)) {
+                key = "";
+            }
+
+            // apply stemming
+            if (Stemming == 1) {
+                key = doStemming(key);
+            }
+
+            // count the occurrences of a word
+            if (!key.equals("")) {
+                if (query.terms.containsKey(key)) {
+                    query.terms.put(key, query.terms.get(key) + 1);
+                    if (Double.compare(maxFreq, query.terms.get(key)) < 0) {
+                        maxFreq = query.terms.get(key);
+                    }
+                } else {
+                    query.terms.put(key, 1.0);
+                }
+            }
+        }
+
+        // apply TF
+        switch(TFType) {
+            case 0: // none
+                break;
+            case 1: // raw
+                break;
+            case 2: // binary
+                for (String termKey : query.terms.keySet()) {
+                    query.terms.put(termKey, 1.0);
                 }
                 break;
-            case "logarithmic": // logarithmic
-                while(terms.size() > 0) {
-                    term = new String[2]; // [0]: term, [1]: frequency
-                    counter = 1;
-                    term[0] = terms.get(0);
-                    terms.remove(0);
-                    for (int i = 0; i < terms.size(); i++) {
-                        if (terms.get(i).equals(term[0])) {
-                            counter++;
-                            terms.remove(i);
-                            i--;
-                        }
-                    }
-                    term[1] = String.valueOf((double) 1 + Math.log10(counter));
-                    termFreq.add(term);
+            case 3: // augmented
+                for (String termKey : query.terms.keySet()) {
+                    query.terms.put(termKey, 0.5 + 0.5 * query.terms.get(termKey)/maxFreq);
+                }
+                break;
+            case 4: // logarithmic
+                for (String termKey : query.terms.keySet()) {
+                    query.terms.put(termKey, 1 + Math.log10(query.terms.get(termKey)));
                 }
                 break;
             default:
                 break;
         }
-
-        return termFreq;
     }
 
-    /**
-     * Retrieve the related documents from the query
-     * @param tf tf methods
-     * @param idf idf methods
-     * @param isNormalize whether want to normalize or not
-     * @param swLocation stopword location
-     * @return list of RetrievedDocument
-     */
-    public ArrayList<RetrievedDocument> search(String tf, String idf, String isNormalize, String stemming,
-                                               String swLocation, String idfLocation) {
-        double queryWeight;
-        HashMap<String, Double> idfScore;
-        ArrayList<String[]> weightedTerms;
+    public ArrayList<RetrievedDocument> searchAll(int tf, int idf, int isNormalize, int stemming,
+                                                  MultipartFile swFile, String idfLocation, int method, int topS,
+                                                  int isExpansion, int isPseudo, int topN, int useDifferentCollection) {
+        Map<String, Double> idfScore = loadIDF(idfLocation);
         ArrayList<RetrievedDocument> result = new ArrayList<>();
 
-        for (Query aQueryList : queryList) {
+        for (Map.Entry<Integer, Query> aQuery : queryList.entrySet()) {
+            Query query = aQuery.getValue();
+            RetrievedDocument rd = search(aQuery.getKey(), query, tf, idf, isNormalize, stemming, idfScore, swFile);
 
-            queryWeight = 0;
-            splitSentences(aQueryList.description);
-            if (swLocation != null) {
-                removeStopWord(swLocation);
-            }
-            if (stemming.equals("use")) {
-                doStemming(true);
-            }
-            weightedTerms = calculateTermFrequency(tf);
-
-            for (String[] weightedTerm : weightedTerms) {
-                if (idf.equals("use")) {
-                    idfScore = loadIDF(idfLocation);
-                    if (idfScore.containsKey(weightedTerm[0])) {
-                        queryWeight += (Double.valueOf(weightedTerm[1]) * idfScore.get(weightedTerm[0]));
-                    } else {
-                        queryWeight += Double.valueOf(weightedTerm[1]);
-                    }
-
-                } else {
-                    queryWeight += Double.valueOf(weightedTerm[1]);
-                }
-            }
-
-            if (isNormalize.equals("use")) {
-                queryWeight = queryWeight / queryLength(weightedTerms);
-            }
-
-            result.add(new RetrievedDocument(aQueryList.no, invertedTerms, aQueryList.rj, documents,
-                    queryWeight, weightedTerms, isNormalize));
+            result.add(rd);
         }
-
 
         return result;
     }
 
-    /**
-     * the query length
-     * @param queryTerms the terms of the query
-     * @return the length of the query
-     */
-    public double queryLength(ArrayList<String[]> queryTerms) {
-        double result = 0;
-        for (String[] queryTerm : queryTerms) {
-            result += Math.pow(Double.valueOf(queryTerm[1]), 2);
-        }
+    public void secondRetrieval(int isPseudo, int topS, int topN, RetrievedDocument rd, int isExpansion, int method) {
+        if (isPseudo > 0) {
+            rd.topNRelevant(topS, topN);
 
-        return  result;
+            if (isExpansion > 0) {
+                rd.updateQueryWithExpansion(topS, 0);
+            } else {
+                rd.updateQuery(0);
+            }
+        } else {
+            rd.findRelevance(topS);
+            if (isExpansion > 0) {
+                rd.updateQueryWithExpansion(topS, method);
+            } else {
+                rd.updateQuery(method);
+            }
+        }
+    }
+
+    /**
+     * Retrieve the related docList from a query
+     * @param tf tf methods
+     * @param idf idf methods
+     * @param isNormalize whether want to normalize or not
+     * @param swFile stopword location
+     * @return list of RetrievedDocument
+     */
+    public RetrievedDocument search(Integer queryNo, Query query, int tf, int idf, int isNormalize, int stemming,
+                                    Map<String, Double> idfScore, MultipartFile swFile) {
+            splitSentences(query, tf, stemming, swFile);
+            return new RetrievedDocument(queryNo, invertedTerms, query.rj, idf, isNormalize, idfScore, documents, query.terms);
     }
 }

@@ -1,9 +1,11 @@
 package com.researchengine.model.form;
 
-/**
- * Created by christangga on 27-Oct-15.
- */
 public class SearchForm {
+    private String query;
+
+    public SearchForm() {
+    }
+
     public String getQuery() {
         return query;
     }
@@ -11,7 +13,5 @@ public class SearchForm {
     public void setQuery(String query) {
         this.query = query;
     }
-
-    private String query;
 
 }

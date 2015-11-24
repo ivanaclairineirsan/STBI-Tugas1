@@ -1,6 +1,18 @@
+@font-face {
+  font-family: Montserrat;
+  src: url(../fonts/Montserrat-Regular.ttf);
+}
+
+.navbar-inverse {
+  background-color: #333333;
+}
+
 body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: #eeeeee;
   padding-top: 50px;
 }
+
 .starter-template {
   padding: 40px 15px;
 }

@@ -1,22 +1,19 @@
 package com.researchengine.model;
 
-import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * Created by christangga on 05-Oct-15.
- */
 public class Query {
 
-    /* query identifier */
-    public int no;
     /* query content */
-    public String description;
+    public String queryContent;
     /* the relevant judgments of the query */
-    public RelevanceJudgement rj;
+    public Set<Integer> rj;
+    /* query terms */
+    public Map<String, Double> terms;
 
-    public Query(int no, String description, RelevanceJudgement rj) {
-        this.no = no;
-        this.description = description;
+    public Query(String queryContent, Set<Integer> rj) {
+        this.queryContent = queryContent.toLowerCase();
         this.rj = rj;
     }
 

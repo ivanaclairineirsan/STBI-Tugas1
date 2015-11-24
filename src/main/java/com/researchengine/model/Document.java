@@ -1,46 +1,31 @@
 package com.researchengine.model;
 
-import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- * Created by christangga on 05-Oct-15.
- */
+
 public class Document {
 
-    public int no;
     public String title;
     public String author;
     public String description;
-    public ArrayList<String> terms;
+    public Map<String, Double> terms;
 
-    public Document(int no, String title, String author, String description) {
-        this.no = no;
+    public Document(String title, String author, String description) {
         this.title = title;
         this.author = author;
         this.description = description;
-        this.terms = new ArrayList<String>();
-        this.terms = splitSentences();
+        this.terms = new HashMap<>();
     }
 
-    public Document() {
-        no = 0;
-        title = "";
-        author = "";
-        description = "";
-        terms = new ArrayList<String>();
+    public double documentLength(){
+            double result = 0.0;
+            for (Map.Entry keyValue : terms.entrySet()) {
+                result += Math.pow((double) keyValue.getValue(), 2);
+            }
+            return  result;
     }
-
-    public ArrayList<String> splitSentences() {
-        ArrayList<String> terms = new ArrayList<String>();
-        String sentence = description.toLowerCase();
-        Pattern p = Pattern.compile("\\w+");
-        Matcher m = p.matcher(sentence);
-        while(m.find()) {
-            terms.add(m.group());
-        }
-        return terms;
-    }
-
 }
+
+
+

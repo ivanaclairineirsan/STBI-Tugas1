@@ -1,56 +1,49 @@
 package com.researchengine.model;
 
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-
-/**
- * Kelas buat catatan aja cara pake nya -- nanti kelas ini dihapus
- */
 public class Main {
+    private static String commaSeparate(Iterable<?> items) {
+        StringBuilder builder = new StringBuilder();
+        for (Object item : items) {
+            if (builder.length() != 0) {
+                builder.append(", ");
+            }
+            builder.append(item);
+        }
+        return builder.toString();
+    }
+
     public static void main(String[] args) {
-        Documents docs = new Documents();
-        docs.loadDocuments("data/ADI/adi.all");
+//        Documents d = new Documents("data/CISI/cisi.all", "data/stopword.txt", "data/iFile.txt", "data/log.txt", 1, 1, 1);
+//        Documents d = new Documents(); d.loadDocuments("data/CISI/cisi.all");
+//        System.out.println("load documents: " + (System.currentTimeMillis() - time) + " ms");
+//        for(Map.Entry<Integer, Document> doc: d.docList.entrySet())
+//        {
+//            System.out.print(" " + doc.getKey());
+//        }
+//        Queries q = new Queries();
 
-//        docs.removeStopWord("data/stopword.txt");
-//        docs.doStemming(1);
-//        docs.setInvertedTerms(1, 1);
-//        docs.saveToFile("data/iFile2.txt");
-//        docs.calculateIDF();
-//        docs.saveToFileIDF("data/IDF2.txt");
+//        Queries q = new Queries(d.docList);
+//        q.loadInvertedFile("data/iFile.txt");
+//        q.loadRelevanceJudgement("data/CISI/qrels.text");
+//        q.loadQueries("data/CISI/query.text");
+//        q.createQuery("information");
 
-        Queries queries = new Queries(docs.docList);
-        queries.loadInvertedFile("data/iFile2.txt");
-//        queries.loadRelevanceJudgement("data/ADI/qrels.text");
-        queries.loadQueries("data/ADI/query.text");
-
-//        queries.createQuery("What problems and concerns are there in making up descriptive titles? What difficulties are involved in automatically retrieving articles from approximate titles? What is the usual relevance of the content of articles to their titles?");
-
-        ArrayList<RetrievedDocument> results = queries.search("raw", "use", "use", "use", "data/stopword.txt", "data/IDF2.txt");
-
-        int idx = 0;
-        // print one query
-        System.out.print(queries.queryList.get(idx).no + ": " + queries.queryList.get(idx).description + ", ");
-
-        // print relevance judgement related to the query above
-        if (queries.queryList.get(idx).rj!= null) {
-            System.out.print(queries.queryList.get(idx).rj.relevantDocs);
-        } else {
-            System.out.print("[No Relevance Judgement found!]");
-        }
-
-        // print the retrieved docs and its recall-precision
-        System.out.println();
-        RetrievedDocument result = results.get(idx);
-        System.out.print("[");
-        ArrayList<String[]> output = result.rankedDocuments;
-        for (int i = 0; i < 50; i++) {
-//                System.out.println(output.get(i)[0] + " : " + output.get(i)[1]);
-            System.out.println(output.get(i)[0] + " : " + output.get(i)[1] + "(" + output.get(i)[2] + "-" + output.get(i)[3] + ")");
-        }
-        System.out.println("]");
-        System.out.println("Avg Recall-Precision: " + result.recallPrecision[0] + "-" + result.recallPrecision[1]);
-        System.out.println("NIAP: " + result.NIAP);
-        System.out.println(docs.docList.size());
-
+//        q.createQuery("give methods for high speed publication, printing, and distribution of  scientific journals.");
+//        q.createQuery("What problems and concerns are there in making up descriptive titles?  \n" +
+//                "What difficulties are involved in automatically retrieving articles from \n" +
+//                "approximate titles?  \n" +
+//                "What is the usual relevance of the content of articles to their titles?");
+//        long time = System.currentTimeMillis();
+//        List<RetrievedDocument> results = q.searchAll(1,1,0,1,"data/stopword.txt","data/log.txt", 0, 20, 0, 0, 18, 1);
+//        System.out.println("search time:" + (System.currentTimeMillis() - time) + " ms");
+//
+//        int idx = 1;
+//        System.out.println("Query: " + idx);
+//        System.out.println(idx + " -> Query : " + q.queryList.get(idx).queryContent);
+//        RetrievedDocument result = results.get(idx-1);
+//        result.printDocResult();
+//        System.out.println("Avg Recall : " + result.recallPrecision[0]);
+//        System.out.println("Precision : " + result.recallPrecision[1]);
+//        System.out.println("NIAP: " + result.NIAP);
     }
 }

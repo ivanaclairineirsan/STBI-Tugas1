@@ -2,140 +2,81 @@ package com.researchengine.model.form;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-/**
- * Created by christangga on 14-Oct-15.
- */
 public class IndexForm {
-    private MultipartFile docLocation;
-    private MultipartFile queryLocation;
-    private MultipartFile rjLocation;
-    private MultipartFile swLocation;
+    private MultipartFile docFile;
+    private MultipartFile queryFile;
+    private MultipartFile rjFile;
+    private MultipartFile swFile;
 
     private String docTF;
     private String docIDF;
-    //    private String docNormalization;
+    private String docNormalization;
     private String docStemming;
 
     private String queryTF;
     private String queryIDF;
-    private String queryNormalization;
     private String queryStemming;
 
-    private String filePath;
+    private String topS;
+    private String topN;
+    private String rfMethod;
+    private String queryExpansion;
+    private String secondRetrieval;
 
-    public IndexForm() {}
-
-    public IndexForm(String filePath) {
-        this.filePath = filePath;
+    public IndexForm() {
     }
 
-    public MultipartFile getDocLocation() {
-        return docLocation;
+    public MultipartFile getDocFile() {
+        return docFile;
     }
 
-    public String getDocString() {
-        try {
-            if (!docLocation.isEmpty()) {
-                byte[] bytes = docLocation.getBytes();
-                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filePath + docLocation.getOriginalFilename())));
-                stream.write(bytes);
-                stream.close();
-
-                return docLocation.getOriginalFilename();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return "";
+    public void setDocFile(MultipartFile docFile) {
+        this.docFile = docFile;
     }
 
-    public void setDocLocation(MultipartFile docLocation) {
-        this.docLocation = docLocation;
+    public MultipartFile getQueryFile() {
+        return queryFile;
     }
 
-    public MultipartFile getQueryLocation() {
-        return queryLocation;
+    public void setQueryFile(MultipartFile queryFile) {
+        this.queryFile = queryFile;
     }
 
-    public String getQueryString() {
-        try {
-            if (!queryLocation.isEmpty()) {
-                byte[] bytes = queryLocation.getBytes();
-                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filePath + queryLocation.getOriginalFilename())));
-                stream.write(bytes);
-                stream.close();
-
-                return queryLocation.getOriginalFilename();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return "";
+    public MultipartFile getRjFile() {
+        return rjFile;
     }
 
-    public void setQueryLocation(MultipartFile queryLocation) {
-        this.queryLocation = queryLocation;
+    public void setRjFile(MultipartFile rjFile) {
+        this.rjFile = rjFile;
     }
 
-    public MultipartFile getRjLocation() {
-        return rjLocation;
+    public MultipartFile getSwFile() {
+        return swFile;
     }
 
-    public String getRjString() {
-        try {
-            if (!rjLocation.isEmpty()) {
-                byte[] bytes = rjLocation.getBytes();
-                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filePath + rjLocation.getOriginalFilename())));
-                stream.write(bytes);
-                stream.close();
-
-                return rjLocation.getOriginalFilename();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return "";
-    }
-
-    public void setRjLocation(MultipartFile rjLocation) {
-        this.rjLocation = rjLocation;
-    }
-
-    public MultipartFile getSwLocation() {
-        return swLocation;
-    }
-
-    public String getSwString() {
-        try {
-            if (!swLocation.isEmpty()) {
-                byte[] bytes = swLocation.getBytes();
-                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filePath + swLocation.getOriginalFilename())));
-                stream.write(bytes);
-                stream.close();
-
-                return rjLocation.getOriginalFilename();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return "";
-    }
-
-    public void setSwLocation(MultipartFile swLocation) {
-        this.swLocation = swLocation;
+    public void setSwFile(MultipartFile swFile) {
+        this.swFile = swFile;
     }
 
     public String getDocTF() {
         return docTF;
+    }
+
+    public int getDocTFInt() {
+        switch (docTF) {
+            case "raw":
+                return 1;
+            case "binary":
+                return 2;
+            case "augmented":
+                return 3;
+            case "logarithmic":
+                return 4;
+            case "none":
+                return 0;
+        }
+
+        return 0;
     }
 
     public void setDocTF(String docTF) {
@@ -146,6 +87,14 @@ public class IndexForm {
         return docIDF;
     }
 
+    public int getDocIDFInt() {
+        if (docIDF.equals("use")) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
     public void setDocIDF(String docIDF) {
         this.docIDF = docIDF;
     }
@@ -154,24 +103,53 @@ public class IndexForm {
         return docStemming;
     }
 
+    public int getDocStemmingInt() {
+        if (docStemming.equals("use")) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
     public void setDocStemming(String docStemming) {
         this.docStemming = docStemming;
     }
 
-//    public int getDocNormalization() {
-//        if (docNormalization.equals("use")) {
-//            return 1;
-//        } else {
-//            return 0;
-//        }
-//    }
-//
-//    public void setDocNormalization(String docNormalization) {
-//        this.docNormalization = docNormalization;
-//    }
+    public String getDocNormalization() {
+        return docNormalization;
+    }
+
+    public int getDocNormalizationInt() {
+        if (docNormalization.equals("use")) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public void setDocNormalization(String docNormalization) {
+        this.docNormalization = docNormalization;
+    }
 
     public String getQueryTF() {
         return queryTF;
+    }
+
+    public int getQueryTFInt() {
+        switch (queryTF) {
+            case "raw":
+                return 1;
+            case "binary":
+                return 2;
+            case "augmented":
+                return 3;
+            case "logarithmic":
+                return 4;
+            case "none":
+                return 0;
+        }
+
+        return 0;
     }
 
     public void setQueryTF(String queryTF) {
@@ -182,24 +160,111 @@ public class IndexForm {
         return queryIDF;
     }
 
+    public int getQueryIDFInt() {
+        if (queryIDF.equals("use")) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
     public void setQueryIDF(String queryIDF) {
         this.queryIDF = queryIDF;
-    }
-
-    public String getQueryNormalization() {
-        return queryNormalization;
-    }
-
-    public void setQueryNormalization(String queryNormalization) {
-        this.queryNormalization = queryNormalization;
     }
 
     public String getQueryStemming() {
         return queryStemming;
     }
 
+    public int getQueryStemmingInt() {
+        if (queryStemming.equals("use")) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
     public void setQueryStemming(String queryStemming) {
         this.queryStemming = queryStemming;
+    }
+
+    public String getTopS() {
+        return topS;
+    }
+
+    public int getTopSInt() {
+        return Integer.parseInt(topS);
+    }
+
+    public void setTopS(String topS) {
+        this.topS = topS;
+    }
+
+    public String getTopN() {
+        return topN;
+    }
+
+    public int getTopNInt() {
+        return Integer.parseInt(topN);
+    }
+
+    public void setTopN(String topN) {
+        this.topN = topN;
+    }
+
+    public String getRfMethod() {
+        return rfMethod;
+    }
+
+    public int getRfMethodInt() {
+        switch (rfMethod) {
+            case "roccio":
+                return 0;
+            case "regular":
+                return 1;
+            case "dec-hi":
+                return 2;
+            case "pseudo":
+                return 3;
+        }
+
+        return 0;
+    }
+
+    public void setRfMethod(String rfMethod) {
+        this.rfMethod = rfMethod;
+    }
+
+    public String getQueryExpansion() {
+        return queryExpansion;
+    }
+
+    public int getQueryExpansionInt() {
+        if (queryExpansion.equals("yes")) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public void setQueryExpansion(String queryExpansion) {
+        this.queryExpansion = queryExpansion;
+    }
+
+    public String getSecondRetrieval() {
+        return secondRetrieval;
+    }
+
+    public int getSecondRetrievalInt() {
+        if (secondRetrieval.equals("different")) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public void setSecondRetrieval(String secondRetrieval) {
+        this.secondRetrieval = secondRetrieval;
     }
 
 }
